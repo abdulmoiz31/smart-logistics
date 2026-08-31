@@ -113,6 +113,12 @@ export interface Room {
   items: Item[];
 }
 
+/** A single image encoded for a model call. */
+export interface ImageInput {
+  base64: string;
+  mimeType: string;
+}
+
 export interface CatalogueEntry {
   category: string;
   label: string;
@@ -156,7 +162,7 @@ export interface Quote {
 
 - [ ] **Step 2: Write `data/catalogue.json`**
 
-Shape is `CatalogueEntry[]`. Below are 12 entries as the pattern; extend to ~60 covering: sofas, chairs, tables, beds, mattresses, dressers, wardrobes, desks, bookcases, TVs, appliances (fridge, washer, dryer, dishwasher, oven), boxes (small/medium/large/wardrobe), rugs, mirrors, lamps, exercise equipment, bicycles, pianos, patio furniture, filing cabinets.
+Shape is `CatalogueEntry[]`. Below are 13 entries as the pattern; extend to ~60 covering: sofas, chairs, tables, beds, mattresses, dressers, wardrobes, desks, bookcases, TVs, appliances (fridge, washer, dryer, dishwasher, oven), boxes (small/medium/large/wardrobe), rugs, mirrors, lamps, exercise equipment, bicycles, pianos, patio furniture, filing cabinets.
 
 ```json
 [
@@ -171,6 +177,7 @@ Shape is `CatalogueEntry[]`. Below are 12 entries as the pattern; extend to ~60 
   { "category": "mattress",       "label": "Mattress",               "cubicFeet": { "s": 20, "m": 30, "l": 45 }, "commonIn": ["bedroom"] },
   { "category": "dresser",        "label": "Dresser",                "cubicFeet": { "s": 18, "m": 28, "l": 40 }, "commonIn": ["bedroom"] },
   { "category": "tv",             "label": "Television",             "cubicFeet": { "s": 4,  "m": 8,  "l": 14 }, "commonIn": ["living_room", "bedroom"] },
+  { "category": "bookcase",       "label": "Bookcase / shelving unit", "cubicFeet": { "s": 15, "m": 25, "l": 35 }, "commonIn": ["living_room", "office", "bedroom"] },
   { "category": "box_medium",     "label": "Medium box",             "cubicFeet": { "s": 2,  "m": 3,  "l": 4  }, "commonIn": ["living_room", "bedroom", "kitchen", "garage", "basement", "office"] }
 ]
 ```
@@ -793,9 +800,9 @@ git commit -m "feat: add Gemini response schemas with forgiving item-level valid
 **Interfaces:**
 - Consumes: `ROOM_ANALYSIS_SCHEMA`, `REFINE_SCHEMA`, `parseRoomAnalysis`, `SchemaError`.
 - Produces:
+  - `ANALYZE_PROMPT: string` (declared at the top of `lib/gemini.ts`)
   - `analyzeRoom(images: ImageInput[], hint?: RoomType): Promise<AnalyzeResult>`
   - `refineItem(images: ImageInput[], itemName: string, candidates: string[]): Promise<RefineResult>`
-  - `interface ImageInput { base64: string; mimeType: string }`
   - `interface AnalyzeResult { analysis: RoomAnalysis; demoMode: boolean }`
   - `interface RefineResult { category: string; sizeClass: SizeClass; confidence: number; demoMode: boolean }`
 
@@ -906,12 +913,11 @@ npm install @google/genai
 
 ```ts
 import { GoogleGenAI } from '@google/genai';
-import type { RoomAnalysis, RoomType, SizeClass } from './types';
+import type { ImageInput, RoomAnalysis, RoomType, SizeClass } from './types';
 import { ROOM_ANALYSIS_SCHEMA, REFINE_SCHEMA, parseRoomAnalysis, SchemaError } from './schema';
 import livingRoom from './fixtures/living_room.json';
 import bedroom from './fixtures/bedroom.json';
 
-export interface ImageInput { base64: string; mimeType: string }
 export interface AnalyzeResult { analysis: RoomAnalysis; demoMode: boolean }
 export interface RefineResult {
   category: string; sizeClass: SizeClass; confidence: number; demoMode: boolean;
@@ -1067,6 +1073,9 @@ git commit -m "feat: add Gemini client with retry ladder and fixture fallback"
   - `getCaptureBase64(roomId: string): Promise<ImageInput[]>`
   - `replaceItems(roomId: string, items: Omit<Item,'id'|'roomId'>[]): Promise<Item[]>`
   - `updateItem(itemId: string, patch: Partial<Item>): Promise<Item>`
+  - `createItem(roomId: string, item: Omit<Item,'id'|'roomId'>): Promise<Item>`
+  - `deleteItem(itemId: string): Promise<void>`
+  - `getItem(itemId: string): Promise<Item | null>`
   - `setAccessFlags(roomId: string, flags: AccessFlag[]): Promise<void>`
   - `getSessionRooms(sessionId: string): Promise<Room[]>`
   - `saveQuote(sessionId: string, breakdown: QuoteBreakdown): Promise<Quote>`
@@ -1173,7 +1182,7 @@ git commit -m "feat: add database schema and Supabase access layer"
 ## Task 7: API routes
 
 **Files:**
-- Create: `app/api/session/route.ts`, `app/api/analyze/route.ts`, `app/api/refine/route.ts`, `app/api/estimate/route.ts`, `app/api/quote/[quoteId]/confirm/route.ts`
+- Create: `app/api/session/route.ts`, `app/api/analyze/route.ts`, `app/api/refine/route.ts`, `app/api/estimate/route.ts`, `app/api/item/route.ts`, `app/api/item/[itemId]/route.ts`, `app/api/quote/[quoteId]/confirm/route.ts`
 
 **Interfaces:**
 - Consumes: everything from `lib/`.
@@ -1185,6 +1194,9 @@ git commit -m "feat: add database schema and Supabase access layer"
 | `POST /api/analyze` | `{ roomId }` | `{ items: Item[], roomType, demoMode }` |
 | `POST /api/refine` | `{ itemId }` | `{ item: Item, demoMode }` |
 | `POST /api/estimate` | `{ sessionId, email? }` | `{ quote: Quote }` |
+| `POST /api/item` | `{ roomId, category, sizeClass }` | `{ item: Item }` |
+| `PATCH /api/item/[itemId]` | `{ count?, sizeClass?, category? }` | `{ item: Item }` |
+| `DELETE /api/item/[itemId]` | — | `{ ok: true }` |
 | `POST /api/quote/[quoteId]/confirm` | `{ cents, notes }` | `{ quote: Quote }` |
 
 Images are uploaded by `POST /api/analyze` as `multipart/form-data` with field `files[]` plus `roomId`, so capture and analysis are one round trip.
@@ -1200,6 +1212,10 @@ Images are uploaded by `POST /api/analyze` as `multipart/form-data` with field `
 8. Return items, roomType, and `demoMode`.
 
 **`/api/refine` sequence:** load the item; if it has no `ambiguousBetween` and `confidence >= 0.7`, return it unchanged (do not spend a call). Otherwise `refineItem`, then `updateItem` with the new category, size, confidence, and `source: 'refined'`.
+
+**`/api/item` routes.** `PATCH` must recompute `cubicFeet` via `resolveCubicFeet(category, sizeClass)` whenever `category` or `sizeClass` changes, then call `updateItem` (which sets `editedByUser = true`). `POST` creates an item with `source: 'user_added'`, `confidence: 1.0`, and `cubicFeet` from the catalogue. `DELETE` removes the row.
+
+Recomputing volume on every size change is the critical part: a size chip that does not move the price is a silent bug, and nothing in the demo path would reveal it.
 
 **`/api/estimate` sequence:** `getSessionRooms`, flatten items, union access flags across rooms, `priceQuote`, `saveQuote` with status `pending_review`, set email if provided.
 
@@ -1385,7 +1401,7 @@ git commit -m "feat: add landing page and room-by-room capture flow"
 - Items grouped by room, room name as a header.
 - Items with `confidence < 0.7` or a non-empty `ambiguousBetween` render **first**, under the heading `We weren't sure about these`. Each gets a "Check this" action calling `POST /api/refine`.
 - Every other item renders under `Looks good`, collapsed by default.
-- Each `ItemRow` allows: adjust count (`Stepper`), change size (`SizeChips`), remove. Any change calls the item patch endpoint and sets `editedByUser`.
+- Each `ItemRow` allows: adjust count (`Stepper`), change size (`SizeChips`), remove. Any change calls `PATCH /api/item/[itemId]`, which sets `editedByUser`.
 - "Add something we missed" opens `SimilarItemPicker`.
 - Running total shows cubic feet, never a price. The price appears only on the estimate screen.
 - Primary action: "Get my estimate" → `POST /api/estimate` → redirect to `/estimate/[sessionId]`.
