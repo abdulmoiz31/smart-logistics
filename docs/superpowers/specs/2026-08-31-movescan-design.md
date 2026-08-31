@@ -64,7 +64,7 @@ so implementing agents can hold the whole system in context.
 /app/api
   /session                  POST  create anonymous session
   /analyze                  POST  room images -> inventory (Gemini)
-  /refine                   POST  single item crop -> size class (Gemini)
+  /refine                   POST  one item, room images -> size class (Gemini)
   /estimate                 POST  inventory + access -> price range
   /quote/[id]/confirm       POST  agent confirmation
 /lib
