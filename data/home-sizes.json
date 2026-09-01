@@ -1,0 +1,7 @@
+[
+  { "label": "studio apartment",   "low": 200,  "high": 400 },
+  { "label": "1-bedroom home",     "low": 400,  "high": 700 },
+  { "label": "2-bedroom home",     "low": 700,  "high": 1100 },
+  { "label": "3-bedroom home",     "low": 1100, "high": 1600 },
+  { "label": "4-bedroom home",     "low": 1600, "high": 2400 }
+]

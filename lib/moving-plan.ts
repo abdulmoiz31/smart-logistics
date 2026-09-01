@@ -1,5 +1,6 @@
 import trucks from '../data/trucks.json';
 import packing from '../data/packing.json';
+import homeSizes from '../data/home-sizes.json';
 import type { AccessFlag, Item } from './types';
 
 interface TruckClass { label: string; feet: number; maxCubicFeet: number; crewSize: number }
@@ -78,4 +79,26 @@ export function planPackingMaterials(items: Item[]): PackingItem[] {
   ];
 
   return lines.filter((line) => line.quantity > 0);
+}
+
+interface HomeBand { label: string; low: number; high: number }
+const HOME_BANDS = homeSizes as HomeBand[];
+
+export interface VolumeContext {
+  comparison: string;
+  typicalLow: number;
+  typicalHigh: number;
+}
+
+export function describeVolume(totalCubicFeet: number): VolumeContext | null {
+  if (totalCubicFeet <= 0) return null;
+
+  const band = HOME_BANDS.find((b) => totalCubicFeet <= b.high)
+    ?? HOME_BANDS[HOME_BANDS.length - 1];
+
+  return {
+    comparison: `Similar to a typical ${band.label}`,
+    typicalLow: band.low,
+    typicalHigh: band.high,
+  };
 }

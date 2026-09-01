@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planTruckAndCrew, planPackingMaterials } from './moving-plan';
+import { planTruckAndCrew, planPackingMaterials, describeVolume } from './moving-plan';
 import type { Item } from './types';
 
 function item(over: Partial<Item> = {}): Item {
@@ -94,5 +94,23 @@ describe('planPackingMaterials', () => {
   it('never returns a zero-quantity line', () => {
     const out = planPackingMaterials([item({ cubicFeet: 400, count: 1 })]);
     for (const entry of out) expect(entry.quantity).toBeGreaterThan(0);
+  });
+});
+
+describe('describeVolume', () => {
+  it('matches a volume to the band it falls in', () => {
+    expect(describeVolume(900)?.comparison).toContain('2-bedroom');
+  });
+
+  it('returns null for an empty inventory rather than a misleading comparison', () => {
+    expect(describeVolume(0)).toBeNull();
+  });
+
+  it('handles a volume above every band', () => {
+    expect(describeVolume(5000)?.comparison).toContain('4-bedroom');
+  });
+
+  it('handles a volume below every band', () => {
+    expect(describeVolume(50)?.comparison).toContain('studio');
   });
 });
