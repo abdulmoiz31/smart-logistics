@@ -36,6 +36,7 @@ export default function ScanPage() {
   const [loading, setLoading] = useState(true);
   const [analysing, setAnalysing] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const [degraded, setDegraded] = useState(false);
   const [error, setError] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -92,6 +93,7 @@ export default function ScanPage() {
     setPhotos([]);
     setItems([]);
     setDemoMode(false);
+    setDegraded(false);
     setPickerOpen(false);
   }
 
@@ -135,12 +137,13 @@ export default function ScanPage() {
       formData.append('roomType', roomType);
       photos.forEach((photo) => formData.append('files', photo.file));
       const response = await fetch('/api/analyze', { method: 'POST', body: formData });
-      const data = await response.json() as { items?: Item[]; roomType?: RoomType; demoMode?: boolean; error?: string };
+      const data = await response.json() as { items?: Item[]; roomType?: RoomType; demoMode?: boolean; degraded?: boolean; error?: string };
       if (!response.ok || !data.items || !data.roomType) throw new Error(data.error ?? 'Unable to analyse this room.');
       setItems(data.items);
       setRoom((current) => current ? { ...current, roomType: data.roomType!, accessFlags, items: data.items! } : current);
       setRoomType(data.roomType);
       setDemoMode(Boolean(data.demoMode));
+      setDegraded(Boolean(data.degraded));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to analyse this room.');
     } finally {
@@ -171,7 +174,9 @@ export default function ScanPage() {
     <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-2xl">
         <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-slate-950">Move<span className="text-cyan-700">Scan</span></Link><span className="text-sm font-semibold text-slate-500">Room-by-room scan</span></header>
-        {demoMode && <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Demo mode — using sample inventory results.</p>}
+        {demoMode && !degraded && <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Demo mode — using sample inventory results.</p>}
+        {degraded && !demoMode && <p className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-900">Using our backup model — results may be less precise.</p>}
+        {degraded && demoMode && <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-900">We couldn&apos;t reach our AI just now — showing sample results. <button type="button" onClick={() => { setError(''); }} className="font-bold underline">Try again</button></p>}
         <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
           <p className="text-sm font-bold uppercase tracking-[0.14em] text-cyan-700">Room {items.length ? 'ready' : '1'}</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Show us this room.</h1>

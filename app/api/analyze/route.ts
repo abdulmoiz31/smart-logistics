@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       editedByUser: false,
     })));
     await updateRoomType(roomId, result.analysis.roomType);
-    return Response.json({ items, roomType: result.analysis.roomType, demoMode: result.demoMode });
+    return Response.json({ items, roomType: result.analysis.roomType, demoMode: result.demoMode, degraded: result.degraded });
   } catch (error) {
     console.error('POST /api/analyze failed', error);
     return Response.json({ error: 'Unable to analyse this room. Please try again.' }, { status: 500 });
