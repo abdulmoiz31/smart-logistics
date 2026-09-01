@@ -821,7 +821,7 @@ git commit -m "feat: add mover lead dashboard with funnel and quality metrics"
 
 ## Task 13: Bounding-box annotations (Feature 7) — LAST, AND OPTIONAL
 
-**Files:** Modify `lib/schema.ts`, `libjson/gemini.ts`; create `components/PhotoAnnotations.tsx`
+**Files:** Modify `lib/schema.ts`, `lib/gemini.ts`; create `components/PhotoAnnotations.tsx`
 
 Effort: **5–8h.** Impact: high if it works, **negative if it does not.**
 
