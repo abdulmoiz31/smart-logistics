@@ -1,0 +1,10 @@
+{
+  "roomType": "bedroom",
+  "items": [
+    {"name":"queen mattress","category":"mattress","count":1,"sizeClass":"m","confidence":0.95},
+    {"name":"wood bed frame","category":"bed_frame","count":1,"sizeClass":"m","confidence":0.9},
+    {"name":"six-drawer dresser","category":"dresser","count":1,"sizeClass":"m","confidence":0.87},
+    {"name":"matching nightstands","category":"nightstand","count":2,"sizeClass":"m","confidence":0.84},
+    {"name":"freestanding wardrobe","category":"wardrobe","count":1,"sizeClass":"m","confidence":0.65,"ambiguousBetween":["wardrobe","bookcase"]}
+  ]
+}

@@ -1,0 +1,111 @@
+export type SizeClass = 's' | 'm' | 'l';
+
+export type ItemSource = 'ai' | 'refined' | 'user_added';
+
+export type AccessFlag = 'stairs' | 'elevator' | 'long_carry';
+
+export type RoomType =
+  | 'living_room'
+  | 'bedroom'
+  | 'kitchen'
+  | 'dining_room'
+  | 'bathroom'
+  | 'garage'
+  | 'basement'
+  | 'office'
+  | 'other';
+
+export type SessionStatus = 'scanning' | 'reviewing' | 'pending_review' | 'confirmed';
+export type QuoteStatus = 'draft' | 'pending_review' | 'confirmed';
+
+export interface Item {
+  id: string;
+  roomId: string;
+  name: string;
+  category: string;
+  count: number;
+  sizeClass: SizeClass;
+  cubicFeet: number;
+  confidence: number;
+  source: ItemSource;
+  editedByUser: boolean;
+  ambiguousBetween?: string[];
+}
+
+export interface DetectedItem {
+  name: string;
+  category: string;
+  count: number;
+  sizeClass: SizeClass;
+  confidence: number;
+  ambiguousBetween?: string[];
+}
+
+export interface RoomAnalysis {
+  roomType: RoomType;
+  items: DetectedItem[];
+}
+
+export interface Room {
+  id: string;
+  sessionId: string;
+  roomType: RoomType;
+  accessFlags: AccessFlag[];
+  items: Item[];
+  capturePaths?: string[];
+}
+
+export interface ImageInput {
+  base64: string;
+  mimeType: string;
+}
+
+export interface CatalogueEntry {
+  category: string;
+  label: string;
+  cubicFeet: Record<SizeClass, number>;
+  commonIn: RoomType[];
+}
+
+export interface RateCard {
+  companyName: string;
+  perCubicFootCents: number;
+  cuftPerCrewHour: number;
+  crewHourlyCents: number;
+  minimumCents: number;
+  accessAdderCents: Record<AccessFlag, number>;
+}
+
+export interface QuoteBreakdown {
+  totalCubicFeet: number;
+  baseCents: number;
+  laborCents: number;
+  accessCents: number;
+  subtotalCents: number;
+  tolerance: number;
+  lowCents: number;
+  highCents: number;
+}
+
+export interface Quote {
+  id: string;
+  sessionId: string;
+  breakdown: QuoteBreakdown;
+  status: QuoteStatus;
+  confirmedCents?: number;
+  agentNotes?: string;
+  createdAt?: string;
+}
+
+export interface QuoteSummary extends Quote {
+  roomCount: number;
+  itemCount: number;
+}
+
+export interface SessionDetails {
+  id: string;
+  customerEmail?: string;
+  status: SessionStatus;
+  rooms: Room[];
+  latestQuote?: Quote;
+}

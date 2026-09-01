@@ -1,0 +1,36 @@
+import { getCaptureBase64, getItem, updateItem } from '@/lib/db';
+import { refineItem } from '@/lib/gemini';
+import { resolveCubicFeet } from '@/lib/catalogue';
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json() as Record<string, unknown>;
+    if (typeof body.itemId !== 'string') {
+      return Response.json({ error: 'itemId is required.' }, { status: 400 });
+    }
+    const item = await getItem(body.itemId);
+    if (!item) return Response.json({ error: 'Item not found.' }, { status: 404 });
+    if (item.confidence >= 0.7 && !item.ambiguousBetween?.length) {
+      return Response.json({ item, demoMode: false });
+    }
+
+    const candidates = item.ambiguousBetween?.length ? item.ambiguousBetween : [item.category];
+    const refinement = await refineItem(
+      await getCaptureBase64(item.roomId),
+      item.name,
+      candidates,
+    );
+    const updated = await updateItem(item.id, {
+      category: refinement.category,
+      sizeClass: refinement.sizeClass,
+      confidence: refinement.confidence,
+      cubicFeet: resolveCubicFeet(refinement.category, refinement.sizeClass),
+      source: 'refined',
+      ambiguousBetween: [],
+    });
+    return Response.json({ item: updated, demoMode: refinement.demoMode });
+  } catch (error) {
+    console.error('POST /api/refine failed', error);
+    return Response.json({ error: 'Unable to refine this item.' }, { status: 500 });
+  }
+}

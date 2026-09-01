@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"/Users/abdulmoiz/Projects/movescan/docs/superpowers\" && find \"/Users/abdulmoiz/Projects/movescan/docs/superpowers\" -type f -print)",
+      "Read(//Users/abdulmoiz/Projects/movescan/docs/superpowers/**)",
+      "Bash(git -C \"/Users/abdulmoiz/Projects/movescan\" status --short && git -C \"/Users/abdulmoiz/Projects/movescan\" log --oneline --decorate --all -10 && git -C \"/Users/abdulmoiz/Projects/movescan\" remote -v && git -C \"/Users/abdulmoiz/Projects/movescan\" ls-tree -r --name-only HEAD)",
+      "Bash(ls -ld /tmp)",
+      "Read(//private/tmp/**)",
+      "Bash(npx:*)",
+      "Bash(cp -R /tmp/movescan-scaffold/app /tmp/movescan-scaffold/public . && cp /tmp/movescan-scaffold/.gitignore /tmp/movescan-scaffold/README.md /tmp/movescan-scaffold/eslint.config.mjs /tmp/movescan-scaffold/next-env.d.ts /tmp/movescan-scaffold/next.config.ts /tmp/movescan-scaffold/package-lock.json /tmp/movescan-scaffold/package.json /tmp/movescan-scaffold/postcss.config.mjs /tmp/movescan-scaffold/tsconfig.json .)",
+      "Bash(npm install @google/genai @supabase/supabase-js && npm install -D vitest tsx)",
+      "Bash(mkdir:*)"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "roomType": "living_room",
+  "items": [
+    {"name":"grey fabric sectional sofa","category":"sofa_sectional","count":1,"sizeClass":"l","confidence":0.94},
+    {"name":"wooden coffee table","category":"coffee_table","count":1,"sizeClass":"m","confidence":0.91},
+    {"name":"65-inch wall-mounted TV","category":"tv","count":1,"sizeClass":"l","confidence":0.88},
+    {"name":"upholstered accent chair","category":"armchair","count":2,"sizeClass":"m","confidence":0.62,"ambiguousBetween":["armchair","sofa_2seat"]},
+    {"name":"tall bookcase","category":"bookcase","count":1,"sizeClass":"l","confidence":0.79},
+    {"name":"cardboard moving boxes","category":"box_medium","count":6,"sizeClass":"m","confidence":0.55}
+  ]
+}

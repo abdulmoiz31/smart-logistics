@@ -1,0 +1,12 @@
+{
+  "companyName": "Meridian Moving Co.",
+  "perCubicFootCents": 145,
+  "cuftPerCrewHour": 120,
+  "crewHourlyCents": 14500,
+  "minimumCents": 49500,
+  "accessAdderCents": {
+    "stairs": 7500,
+    "elevator": 5000,
+    "long_carry": 6000
+  }
+}

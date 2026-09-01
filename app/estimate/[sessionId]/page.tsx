@@ -1,0 +1,101 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+import { PriceRange } from '@/components/PriceRange';
+import { formatCents } from '@/lib/pricing';
+import type { Quote, SessionDetails } from '@/lib/types';
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export default function EstimatePage() {
+  const { sessionId } = useParams<{ sessionId: string }>();
+  const [session, setSession] = useState<SessionDetails>();
+  const [quote, setQuote] = useState<Quote>();
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const sessionResponse = await fetch(`/api/session/${sessionId}`);
+        const sessionData = await sessionResponse.json() as { session?: SessionDetails; error?: string };
+        if (!sessionResponse.ok || !sessionData.session) throw new Error(sessionData.error ?? 'Unable to load this estimate.');
+        if (!sessionData.session.rooms.some((room) => room.items.length)) {
+          window.location.assign(`/scan/${sessionId}`);
+          return;
+        }
+        setSession(sessionData.session);
+        setEmail(sessionData.session.customerEmail ?? '');
+        setSubmitted(Boolean(sessionData.session.customerEmail));
+        if (sessionData.session.latestQuote) {
+          setQuote(sessionData.session.latestQuote);
+        } else {
+          const quoteResponse = await fetch('/api/estimate', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ sessionId }),
+          });
+          const quoteData = await quoteResponse.json() as { quote?: Quote; error?: string };
+          if (!quoteResponse.ok || !quoteData.quote) throw new Error(quoteData.error ?? 'Unable to calculate this estimate.');
+          setQuote(quoteData.quote);
+        }
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Unable to load this estimate.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    void load();
+  }, [sessionId]);
+
+  async function submitEmail() {
+    if (!emailPattern.test(email)) {
+      setError('Enter a valid email address.');
+      return;
+    }
+    setSending(true);
+    setError('');
+    try {
+      const response = await fetch('/api/estimate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId, email }),
+      });
+      const data = await response.json() as { quote?: Quote; error?: string };
+      if (!response.ok || !data.quote) throw new Error(data.error ?? 'Unable to send your estimate.');
+      setQuote(data.quote);
+      setSubmitted(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to send your estimate.');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (loading) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-slate-600">Calculating your estimate…</main>;
+  if (!quote) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6"><p className="font-semibold text-rose-700">{error || 'This estimate could not be found.'}</p></main>;
+
+  const { breakdown } = quote;
+  const confirmed = quote.status === 'confirmed' && quote.confirmedCents !== undefined;
+
+  return (
+    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-3xl">
+        <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-slate-950">Move<span className="text-cyan-700">Scan</span></Link><Link href={`/review/${sessionId}`} className="text-sm font-bold text-cyan-700">Edit inventory</Link></header>
+        <h1 className="mt-8 text-3xl font-black tracking-tight text-slate-950">Your moving estimate</h1>
+        <p className="mt-2 text-slate-600">Based on {Math.round(breakdown.totalCubicFeet)} cubic feet across your photographed rooms.</p>
+        <section className="mt-6">{confirmed ? <div className="rounded-3xl bg-emerald-700 p-6 text-white"><p className="text-sm font-bold uppercase tracking-[0.16em] text-emerald-100">Confirmed price</p><p className="mt-3 text-4xl font-black">{formatCents(quote.confirmedCents!)}</p><p className="mt-3 text-sm text-emerald-100">Confirmed by your moving specialist.</p></div> : <PriceRange lowCents={breakdown.lowCents} highCents={breakdown.highCents} tolerance={breakdown.tolerance} />}</section>
+        <section className="mt-5 rounded-2xl bg-white p-5 shadow-sm"><h2 className="font-black text-slate-950">Estimate details</h2><dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-500">Volume</dt><dd className="font-bold">{breakdown.totalCubicFeet} cu ft</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">Base moving cost</dt><dd className="font-bold">{formatCents(breakdown.baseCents)}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">Crew labor</dt><dd className="font-bold">{formatCents(breakdown.laborCents)}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">Access adders</dt><dd className="font-bold">{formatCents(breakdown.accessCents)}</dd></div></dl></section>
+        {!confirmed && <section className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50 p-5"><h2 className="font-black text-slate-950">Send this estimate to yourself</h2>{submitted ? <p className="mt-2 text-slate-700">A mover will confirm your price within 2 hours.</p> : <><p className="mt-2 text-sm text-slate-600">Email is only used to send your estimate and coordinate confirmation.</p><div className="mt-4 flex flex-col gap-3 sm:flex-row"><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="min-h-11 flex-1 rounded-xl border border-slate-300 bg-white px-3" /><button type="button" onClick={() => void submitEmail()} disabled={sending} className="min-h-11 rounded-xl bg-cyan-700 px-4 font-bold text-white disabled:opacity-60">{sending ? 'Sending…' : 'Send me this estimate'}</button></div></>}</section>}
+        {error && <p role="alert" className="mt-4 text-sm font-semibold text-rose-700">{error}</p>}
+        <p className="mt-6 text-center text-sm leading-6 text-slate-500">This is an estimate based on your photos. Your final price is confirmed by a moving specialist.</p>
+        {session?.customerEmail && <p className="mt-2 text-center text-xs text-slate-400">Estimate requested for {session.customerEmail}</p>}
+      </div>
+    </main>
+  );
+}
