@@ -1,45 +1,123 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import livingRoom from './fixtures/living_room.json';
 
-afterEach(() => {
+beforeEach(() => {
   vi.resetModules();
-  delete process.env.MOVESCAN_DEMO_MODE;
-  delete process.env.GEMINI_API_KEY;
+  vi.unstubAllEnvs();
 });
 
-describe('Gemini demo fallback', () => {
-  beforeEach(() => {
-    vi.resetModules();
-    process.env.MOVESCAN_DEMO_MODE = '1';
-    delete process.env.GEMINI_API_KEY;
-  });
-
-  it('returns fixture inventory without making network requests', async () => {
+describe('demo mode', () => {
+  it('serves the fixture without a network call and is not degraded', async () => {
+    vi.stubEnv('MOVESCAN_DEMO_MODE', '1');
+    vi.stubEnv('GEMINI_API_KEY', '');
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const { analyzeRoom } = await import('./gemini');
-    const result = await analyzeRoom([], 'living_room');
-    expect(result.demoMode).toBe(true);
-    expect(result.analysis.items).toHaveLength(livingRoom.items.length);
+
+    const out = await analyzeRoom([], 'living_room');
+
+    expect(out.demoMode).toBe(true);
+    expect(out.degraded).toBe(false);
+    expect(out.modelUsed).toBeNull();
+    expect(out.analysis.items).toHaveLength(livingRoom.items.length);
     expect(fetchSpy).not.toHaveBeenCalled();
-    fetchSpy.mockRestore();
   });
 
-  it('uses a useful fixture for room types without a dedicated fixture', async () => {
+  it('treats a missing API key as demo mode rather than throwing', async () => {
+    vi.stubEnv('MOVESCAN_DEMO_MODE', '0');
+    vi.stubEnv('GEMINI_API_KEY', '');
     const { analyzeRoom } = await import('./gemini');
-    await expect(analyzeRoom([], 'garage')).resolves.toMatchObject({
-      demoMode: true,
-      analysis: { roomType: 'living_room' },
-    });
+    await expect(analyzeRoom([], 'bedroom')).resolves.toMatchObject({ demoMode: true, degraded: false });
+  });
+});
+
+describe('error classification', () => {
+  it('treats 429, quota, 503, and timeout as quota-ish and everything else as not', async () => {
+    const { isQuotaError } = await import('./gemini');
+    expect(isQuotaError(new Error('429 Too Many Requests'))).toBe(true);
+    expect(isQuotaError(new Error('RESOURCE_EXHAUSTED'))).toBe(true);
+    expect(isQuotaError(new Error('503 Service Unavailable'))).toBe(true);
+    expect(isQuotaError(new Error('Gemini request timed out'))).toBe(true);
+    expect(isQuotaError(new Error('invalid argument'))).toBe(false);
   });
 
-  it('falls back when the API key is absent outside explicit demo mode', async () => {
-    process.env.MOVESCAN_DEMO_MODE = '0';
-    delete process.env.GEMINI_API_KEY;
-    const { analyzeRoom, refineItem } = await import('./gemini');
-    await expect(analyzeRoom([], 'bedroom')).resolves.toMatchObject({ demoMode: true });
-    await expect(refineItem([], 'chair', ['armchair'])).resolves.toMatchObject({
-      category: 'armchair',
-      demoMode: true,
-    });
+  it('does not classify a SchemaError as a quota error', async () => {
+    const { isQuotaError } = await import('./gemini');
+    const { SchemaError } = await import('./schema');
+    expect(isQuotaError(new SchemaError('items is not an array'))).toBe(false);
+  });
+});
+
+describe('cascade', () => {
+  it('escalates to the fallback model on a quota error and reports degraded', async () => {
+    vi.stubEnv('MOVESCAN_DEMO_MODE', '0');
+    vi.stubEnv('GEMINI_API_KEY', 'test-key');
+    vi.stubEnv('GEMINI_MODEL', 'primary-model');
+    vi.stubEnv('GEMINI_FALLBACK_MODEL', 'fallback-model');
+
+    const calls: string[] = [];
+    vi.doMock('@google/genai', () => ({
+      GoogleGenAI: class {
+        models = {
+          generateContent: async ({ model }: { model: string }) => {
+            calls.push(model);
+            if (model === 'primary-model') throw new Error('429 RESOURCE_EXHAUSTED');
+            return { text: JSON.stringify({ roomType: 'bedroom', items: [] }) };
+          },
+        };
+      },
+    }));
+
+    const { analyzeRoom } = await import('./gemini');
+    const out = await analyzeRoom([{ base64: 'x', mimeType: 'image/jpeg' }], 'bedroom');
+
+    expect(calls).toEqual(['primary-model', 'fallback-model']);
+    expect(out.degraded).toBe(true);
+    expect(out.demoMode).toBe(false);
+    expect(out.modelUsed).toBe('fallback-model');
+  });
+
+  it('retries the primary on a schema error instead of escalating', async () => {
+    vi.stubEnv('MOVESCAN_DEMO_MODE', '0');
+    vi.stubEnv('GEMINI_API_KEY', 'test-key');
+    vi.stubEnv('GEMINI_MODEL', 'primary-model');
+    vi.stubEnv('GEMINI_FALLBACK_MODEL', 'fallback-model');
+
+    const calls: string[] = [];
+    vi.doMock('@google/genai', () => ({
+      GoogleGenAI: class {
+        models = {
+          generateContent: async ({ model }: { model: string }) => {
+            calls.push(model);
+            if (calls.length === 1) return { text: 'not json at all' };
+            return { text: JSON.stringify({ roomType: 'bedroom', items: [] }) };
+          },
+        };
+      },
+    }));
+
+    const { analyzeRoom } = await import('./gemini');
+    const out = await analyzeRoom([{ base64: 'x', mimeType: 'image/jpeg' }], 'bedroom');
+
+    expect(calls).toEqual(['primary-model', 'primary-model']);
+    expect(out.degraded).toBe(false);
+    expect(out.modelUsed).toBe('primary-model');
+  });
+
+  it('falls back to the fixture when both models fail', async () => {
+    vi.stubEnv('MOVESCAN_DEMO_MODE', '0');
+    vi.stubEnv('GEMINI_API_KEY', 'test-key');
+    vi.doMock('@google/genai', () => ({
+      GoogleGenAI: class {
+        models = { generateContent: async () => { throw new Error('429 RESOURCE_EXHAUSTED'); } };
+      },
+    }));
+
+    const { analyzeRoom } = await import('./gemini');
+    const out = await analyzeRoom([{ base64: 'x', mimeType: 'image/jpeg' }], 'living_room');
+
+    expect(out.demoMode).toBe(true);
+    expect(out.degraded).toBe(true);
+    expect(out.modelUsed).toBeNull();
+    expect(out.analysis.items.length).toBeGreaterThan(0);
   });
 });

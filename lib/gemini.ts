@@ -29,6 +29,8 @@ Report honestly. An uncertain item is more useful than a confident guess.`;
 export interface AnalyzeResult {
   analysis: RoomAnalysis;
   demoMode: boolean;
+  degraded: boolean;
+  modelUsed: string | null;
 }
 
 export interface RefineResult {
@@ -36,6 +38,7 @@ export interface RefineResult {
   sizeClass: SizeClass;
   confidence: number;
   demoMode: boolean;
+  degraded: boolean;
 }
 
 const TIMEOUT_MS = 12_000;
@@ -57,22 +60,73 @@ function client(): GoogleGenAI {
   return new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 }
 
-function modelId(): string {
-  return process.env.GEMINI_MODEL ?? 'gemini-2.5-flash';
+function primaryModel(): string {
+  return process.env.GEMINI_MODEL ?? 'gemini-3.5-flash-lite';
+}
+
+function fallbackModel(): string {
+  return process.env.GEMINI_FALLBACK_MODEL ?? 'gemini-3.1-flash-lite';
 }
 
 function sleep(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+const QUOTA_PATTERNS = [
+  '429', 'resource_exhausted', 'quota', 'rate limit',
+  '500', '502', '503', '504', 'timed out', 'unavailable',
+];
+
+export function isQuotaError(error: unknown): boolean {
+  if (error instanceof SchemaError) return false;
+  const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
+  return QUOTA_PATTERNS.some((pattern) => message.includes(pattern));
+}
+
+interface CascadeOutcome<T> {
+  value: T | null;
+  degraded: boolean;
+  modelUsed: string | null;
+}
+
+async function cascade<T>(
+  attempt: (model: string, repair: boolean) => Promise<T>,
+): Promise<CascadeOutcome<T>> {
+  const primary = primaryModel();
+
+  for (let tryIndex = 0; tryIndex < 2; tryIndex += 1) {
+    try {
+      return { value: await attempt(primary, tryIndex === 1), degraded: false, modelUsed: primary };
+    } catch (error) {
+      console.error(`[gemini] ${primary} attempt ${tryIndex + 1} failed`, error);
+      if (isQuotaError(error)) break;
+      if (tryIndex === 0) await sleep(RETRY_DELAY_MS);
+    }
+  }
+
+  const fallback = fallbackModel();
+  if (fallback && fallback !== primary) {
+    try {
+      return { value: await attempt(fallback, false), degraded: true, modelUsed: fallback };
+    } catch (error) {
+      console.error(`[gemini] fallback ${fallback} failed`, error);
+    }
+  }
+
+  return { value: null, degraded: true, modelUsed: null };
+}
+
 async function callGemini(
+  model: string,
   prompt: string,
   images: ImageInput[],
   responseJsonSchema: unknown,
 ): Promise<unknown> {
-  const response = await Promise.race([
-    client().models.generateContent({
-      model: modelId(),
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const response = await client().models.generateContent({
+      model,
       contents: [{
         role: 'user',
         parts: [
@@ -87,45 +141,30 @@ async function callGemini(
         responseJsonSchema,
         temperature: 0.1,
       },
-    }),
-    sleep(TIMEOUT_MS).then(() => {
-      throw new Error('Gemini request timed out');
-    }),
-  ]);
-
-  const text = response.text;
-  if (!text) throw new SchemaError('Gemini returned no response text');
-  return JSON.parse(text);
-}
-
-async function retry<T>(request: (repair: boolean) => Promise<T>): Promise<T | null> {
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    try {
-      return await request(attempt === 1);
-    } catch (error) {
-      console.error(`Gemini attempt ${attempt + 1} failed`, error);
-      if (attempt === 0) await sleep(RETRY_DELAY_MS);
-    }
+    });
+    const text = response.text;
+    if (!text) throw new SchemaError('Gemini returned no response text');
+    return JSON.parse(text);
+  } finally {
+    clearTimeout(timer);
   }
-  return null;
 }
 
 export async function analyzeRoom(images: ImageInput[], hint?: RoomType): Promise<AnalyzeResult> {
   if (isDemoMode()) {
-    return { analysis: fixtureFor(hint), demoMode: true };
+    return { analysis: fixtureFor(hint), demoMode: true, degraded: false, modelUsed: null };
   }
 
-  const analysis = await retry(async (repair) => parseRoomAnalysis(await callGemini(
-    repair
-      ? `${ANALYZE_PROMPT}\n\nYour previous response was invalid. Reply with only a JSON object matching the schema.`
-      : ANALYZE_PROMPT,
+  const outcome = await cascade(async (model, repair) => parseRoomAnalysis(await callGemini(
+    model,
+    repair ? `${ANALYZE_PROMPT}\n\nYour previous response was invalid. Reply with only a JSON object matching the schema.` : ANALYZE_PROMPT,
     images,
     ROOM_ANALYSIS_SCHEMA,
   )));
 
-  return analysis
-    ? { analysis, demoMode: false }
-    : { analysis: fixtureFor(hint), demoMode: true };
+  return outcome.value
+    ? { analysis: outcome.value, demoMode: false, degraded: outcome.degraded, modelUsed: outcome.modelUsed }
+    : { analysis: fixtureFor(hint), demoMode: true, degraded: true, modelUsed: null };
 }
 
 export async function refineItem(
@@ -133,20 +172,19 @@ export async function refineItem(
   itemName: string,
   candidates: string[],
 ): Promise<RefineResult> {
-  const fallback: RefineResult = {
-    category: candidates[0] ?? 'unknown_item',
-    sizeClass: 'm',
-    confidence: 0.5,
-    demoMode: true,
-  };
-  if (isDemoMode()) return fallback;
+  if (isDemoMode()) {
+    return { category: candidates[0] ?? 'unknown_item', sizeClass: 'm', confidence: 0.5, demoMode: true, degraded: false };
+  }
 
   const prompt = `Look at photographs of one room and consider only the ${JSON.stringify(itemName)}. Choose the correct category from ${candidates.join(', ') || 'unknown_item'} and judge whether it is s, m, or l. Ignore every other object.`;
-  const refinement = await retry(async (repair) => parseRefinement(await callGemini(
+  const outcome = await cascade(async (model, repair) => parseRefinement(await callGemini(
+    model,
     repair ? `${prompt}\n\nReply with only a JSON object matching the schema.` : prompt,
     images,
     REFINE_SCHEMA,
   )));
 
-  return refinement ? { ...refinement, demoMode: false } : fallback;
+  return outcome.value
+    ? { ...outcome.value, demoMode: false, degraded: outcome.degraded }
+    : { category: candidates[0] ?? 'unknown_item', sizeClass: 'm', confidence: 0.5, demoMode: true, degraded: true };
 }
