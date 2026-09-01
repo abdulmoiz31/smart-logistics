@@ -1,60 +1,847 @@
 [
-  {"category":"sofa_2seat","label":"Loveseat / 2-seat sofa","cubicFeet":{"s":25,"m":32,"l":40},"commonIn":["living_room","office"]},
-  {"category":"sofa_3seat","label":"3-seat sofa","cubicFeet":{"s":40,"m":50,"l":60},"commonIn":["living_room"]},
-  {"category":"sofa_sectional","label":"Sectional sofa","cubicFeet":{"s":70,"m":90,"l":120},"commonIn":["living_room"]},
-  {"category":"sleeper_sofa","label":"Sleeper sofa","cubicFeet":{"s":45,"m":55,"l":70},"commonIn":["living_room","office"]},
-  {"category":"armchair","label":"Armchair","cubicFeet":{"s":12,"m":18,"l":25},"commonIn":["living_room","bedroom","office"]},
-  {"category":"recliner","label":"Recliner","cubicFeet":{"s":18,"m":25,"l":32},"commonIn":["living_room","bedroom"]},
-  {"category":"ottoman","label":"Ottoman","cubicFeet":{"s":4,"m":7,"l":11},"commonIn":["living_room","bedroom"]},
-  {"category":"coffee_table","label":"Coffee table","cubicFeet":{"s":8,"m":12,"l":18},"commonIn":["living_room"]},
-  {"category":"side_table","label":"Side table","cubicFeet":{"s":4,"m":6,"l":9},"commonIn":["living_room","bedroom","office"]},
-  {"category":"console_table","label":"Console table","cubicFeet":{"s":8,"m":12,"l":18},"commonIn":["living_room","dining_room"]},
-  {"category":"dining_table","label":"Dining table","cubicFeet":{"s":25,"m":35,"l":50},"commonIn":["dining_room","kitchen"]},
-  {"category":"dining_chair","label":"Dining chair","cubicFeet":{"s":5,"m":7,"l":9},"commonIn":["dining_room","kitchen"]},
-  {"category":"bar_stool","label":"Bar stool","cubicFeet":{"s":4,"m":6,"l":8},"commonIn":["kitchen","dining_room"]},
-  {"category":"china_cabinet","label":"China cabinet","cubicFeet":{"s":25,"m":35,"l":50},"commonIn":["dining_room"]},
-  {"category":"bed_frame","label":"Bed frame","cubicFeet":{"s":30,"m":45,"l":65},"commonIn":["bedroom"]},
-  {"category":"mattress","label":"Mattress","cubicFeet":{"s":20,"m":30,"l":45},"commonIn":["bedroom"]},
-  {"category":"nightstand","label":"Nightstand","cubicFeet":{"s":4,"m":6,"l":9},"commonIn":["bedroom"]},
-  {"category":"dresser","label":"Dresser","cubicFeet":{"s":18,"m":28,"l":40},"commonIn":["bedroom"]},
-  {"category":"wardrobe","label":"Wardrobe / armoire","cubicFeet":{"s":30,"m":45,"l":65},"commonIn":["bedroom"]},
-  {"category":"vanity","label":"Vanity table","cubicFeet":{"s":12,"m":18,"l":25},"commonIn":["bedroom","bathroom"]},
-  {"category":"crib","label":"Crib","cubicFeet":{"s":15,"m":20,"l":28},"commonIn":["bedroom"]},
-  {"category":"changing_table","label":"Changing table","cubicFeet":{"s":9,"m":14,"l":20},"commonIn":["bedroom"]},
-  {"category":"desk","label":"Desk","cubicFeet":{"s":15,"m":25,"l":40},"commonIn":["office","bedroom"]},
-  {"category":"office_chair","label":"Office chair","cubicFeet":{"s":10,"m":15,"l":22},"commonIn":["office"]},
-  {"category":"filing_cabinet","label":"Filing cabinet","cubicFeet":{"s":10,"m":18,"l":28},"commonIn":["office","garage"]},
-  {"category":"bookcase","label":"Bookcase / shelving unit","cubicFeet":{"s":15,"m":25,"l":35},"commonIn":["living_room","office","bedroom"]},
-  {"category":"tv","label":"Television","cubicFeet":{"s":4,"m":8,"l":14},"commonIn":["living_room","bedroom"]},
-  {"category":"tv_stand","label":"TV stand / media console","cubicFeet":{"s":10,"m":16,"l":25},"commonIn":["living_room"]},
-  {"category":"floor_lamp","label":"Floor lamp","cubicFeet":{"s":2,"m":4,"l":6},"commonIn":["living_room","bedroom","office"]},
-  {"category":"table_lamp","label":"Table lamp","cubicFeet":{"s":1,"m":2,"l":3},"commonIn":["living_room","bedroom","office"]},
-  {"category":"rug","label":"Area rug","cubicFeet":{"s":3,"m":6,"l":10},"commonIn":["living_room","bedroom","dining_room"]},
-  {"category":"mirror","label":"Mirror","cubicFeet":{"s":2,"m":4,"l":7},"commonIn":["living_room","bedroom","bathroom"]},
-  {"category":"artwork","label":"Framed artwork","cubicFeet":{"s":1,"m":2,"l":4},"commonIn":["living_room","bedroom","office"]},
-  {"category":"fridge","label":"Refrigerator","cubicFeet":{"s":35,"m":45,"l":60},"commonIn":["kitchen","garage"]},
-  {"category":"freezer","label":"Freezer","cubicFeet":{"s":20,"m":35,"l":50},"commonIn":["kitchen","garage","basement"]},
-  {"category":"oven","label":"Oven / range","cubicFeet":{"s":25,"m":35,"l":45},"commonIn":["kitchen"]},
-  {"category":"dishwasher","label":"Dishwasher","cubicFeet":{"s":15,"m":22,"l":30},"commonIn":["kitchen"]},
-  {"category":"microwave","label":"Microwave","cubicFeet":{"s":3,"m":5,"l":8},"commonIn":["kitchen"]},
-  {"category":"washer","label":"Washing machine","cubicFeet":{"s":25,"m":35,"l":45},"commonIn":["kitchen","garage","basement"]},
-  {"category":"dryer","label":"Clothes dryer","cubicFeet":{"s":20,"m":30,"l":40},"commonIn":["kitchen","garage","basement"]},
-  {"category":"kitchen_island","label":"Kitchen island","cubicFeet":{"s":25,"m":40,"l":60},"commonIn":["kitchen"]},
-  {"category":"box_small","label":"Small box","cubicFeet":{"s":1,"m":1.5,"l":2},"commonIn":["living_room","bedroom","kitchen","garage","basement","office"]},
-  {"category":"box_medium","label":"Medium box","cubicFeet":{"s":2,"m":3,"l":4},"commonIn":["living_room","bedroom","kitchen","garage","basement","office"]},
-  {"category":"box_large","label":"Large box","cubicFeet":{"s":4,"m":6,"l":8},"commonIn":["living_room","bedroom","kitchen","garage","basement","office"]},
-  {"category":"wardrobe_box","label":"Wardrobe box","cubicFeet":{"s":10,"m":15,"l":20},"commonIn":["bedroom","garage","basement"]},
-  {"category":"bicycle","label":"Bicycle","cubicFeet":{"s":10,"m":15,"l":20},"commonIn":["garage","basement"]},
-  {"category":"treadmill","label":"Treadmill","cubicFeet":{"s":30,"m":45,"l":60},"commonIn":["garage","basement","bedroom"]},
-  {"category":"exercise_bike","label":"Exercise bike","cubicFeet":{"s":12,"m":18,"l":25},"commonIn":["garage","basement","bedroom"]},
-  {"category":"elliptical","label":"Elliptical machine","cubicFeet":{"s":25,"m":35,"l":50},"commonIn":["garage","basement"]},
-  {"category":"piano_upright","label":"Upright piano","cubicFeet":{"s":35,"m":50,"l":65},"commonIn":["living_room","dining_room"]},
-  {"category":"piano_grand","label":"Grand piano","cubicFeet":{"s":80,"m":110,"l":150},"commonIn":["living_room","dining_room"]},
-  {"category":"patio_table","label":"Patio table","cubicFeet":{"s":15,"m":25,"l":40},"commonIn":["other"]},
-  {"category":"patio_chair","label":"Patio chair","cubicFeet":{"s":4,"m":7,"l":10},"commonIn":["other"]},
-  {"category":"grill","label":"Barbecue grill","cubicFeet":{"s":12,"m":20,"l":35},"commonIn":["other","garage"]},
-  {"category":"tool_chest","label":"Tool chest","cubicFeet":{"s":15,"m":25,"l":40},"commonIn":["garage","basement"]},
-  {"category":"lawn_mower","label":"Lawn mower","cubicFeet":{"s":12,"m":20,"l":30},"commonIn":["garage"]},
-  {"category":"storage_shelf","label":"Storage shelf","cubicFeet":{"s":15,"m":25,"l":40},"commonIn":["garage","basement"]},
-  {"category":"unknown_item","label":"Other item","cubicFeet":{"s":5,"m":15,"l":30},"commonIn":["other"]}
+  {
+    "category": "sofa_2seat",
+    "label": "Loveseat / 2-seat sofa",
+    "cubicFeet": {
+      "s": 25,
+      "m": 32,
+      "l": 40
+    },
+    "commonIn": [
+      "living_room",
+      "office"
+    ]
+  },
+  {
+    "category": "sofa_3seat",
+    "label": "3-seat sofa",
+    "cubicFeet": {
+      "s": 40,
+      "m": 50,
+      "l": 60
+    },
+    "commonIn": [
+      "living_room"
+    ]
+  },
+  {
+    "category": "sofa_sectional",
+    "label": "Sectional sofa",
+    "cubicFeet": {
+      "s": 70,
+      "m": 90,
+      "l": 120
+    },
+    "commonIn": [
+      "living_room"
+    ]
+  },
+  {
+    "category": "sleeper_sofa",
+    "label": "Sleeper sofa",
+    "cubicFeet": {
+      "s": 45,
+      "m": 55,
+      "l": 70
+    },
+    "commonIn": [
+      "living_room",
+      "office"
+    ]
+  },
+  {
+    "category": "armchair",
+    "label": "Armchair",
+    "cubicFeet": {
+      "s": 12,
+      "m": 18,
+      "l": 25
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "office"
+    ]
+  },
+  {
+    "category": "recliner",
+    "label": "Recliner",
+    "cubicFeet": {
+      "s": 18,
+      "m": 25,
+      "l": 32
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom"
+    ]
+  },
+  {
+    "category": "ottoman",
+    "label": "Ottoman",
+    "cubicFeet": {
+      "s": 4,
+      "m": 7,
+      "l": 11
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom"
+    ]
+  },
+  {
+    "category": "coffee_table",
+    "label": "Coffee table",
+    "cubicFeet": {
+      "s": 8,
+      "m": 12,
+      "l": 18
+    },
+    "commonIn": [
+      "living_room"
+    ]
+  },
+  {
+    "category": "side_table",
+    "label": "Side table",
+    "cubicFeet": {
+      "s": 4,
+      "m": 6,
+      "l": 9
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "office"
+    ]
+  },
+  {
+    "category": "console_table",
+    "label": "Console table",
+    "cubicFeet": {
+      "s": 8,
+      "m": 12,
+      "l": 18
+    },
+    "commonIn": [
+      "living_room",
+      "dining_room"
+    ]
+  },
+  {
+    "category": "dining_table",
+    "label": "Dining table",
+    "cubicFeet": {
+      "s": 25,
+      "m": 35,
+      "l": 50
+    },
+    "commonIn": [
+      "dining_room",
+      "kitchen"
+    ],
+    "handling": [
+      "disassembly"
+    ]
+  },
+  {
+    "category": "dining_chair",
+    "label": "Dining chair",
+    "cubicFeet": {
+      "s": 5,
+      "m": 7,
+      "l": 9
+    },
+    "commonIn": [
+      "dining_room",
+      "kitchen"
+    ]
+  },
+  {
+    "category": "bar_stool",
+    "label": "Bar stool",
+    "cubicFeet": {
+      "s": 4,
+      "m": 6,
+      "l": 8
+    },
+    "commonIn": [
+      "kitchen",
+      "dining_room"
+    ]
+  },
+  {
+    "category": "china_cabinet",
+    "label": "China cabinet",
+    "cubicFeet": {
+      "s": 25,
+      "m": 35,
+      "l": 50
+    },
+    "commonIn": [
+      "dining_room"
+    ],
+    "handling": [
+      "fragile",
+      "high_value"
+    ]
+  },
+  {
+    "category": "bed_frame",
+    "label": "Bed frame",
+    "cubicFeet": {
+      "s": 30,
+      "m": 45,
+      "l": 65
+    },
+    "commonIn": [
+      "bedroom"
+    ],
+    "handling": [
+      "disassembly"
+    ]
+  },
+  {
+    "category": "mattress",
+    "label": "Mattress",
+    "cubicFeet": {
+      "s": 20,
+      "m": 30,
+      "l": 45
+    },
+    "commonIn": [
+      "bedroom"
+    ]
+  },
+  {
+    "category": "nightstand",
+    "label": "Nightstand",
+    "cubicFeet": {
+      "s": 4,
+      "m": 6,
+      "l": 9
+    },
+    "commonIn": [
+      "bedroom"
+    ]
+  },
+  {
+    "category": "dresser",
+    "label": "Dresser",
+    "cubicFeet": {
+      "s": 18,
+      "m": 28,
+      "l": 40
+    },
+    "commonIn": [
+      "bedroom"
+    ]
+  },
+  {
+    "category": "wardrobe",
+    "label": "Wardrobe / armoire",
+    "cubicFeet": {
+      "s": 30,
+      "m": 45,
+      "l": 65
+    },
+    "commonIn": [
+      "bedroom"
+    ],
+    "handling": [
+      "disassembly"
+    ]
+  },
+  {
+    "category": "vanity",
+    "label": "Vanity table",
+    "cubicFeet": {
+      "s": 12,
+      "m": 18,
+      "l": 25
+    },
+    "commonIn": [
+      "bedroom",
+      "bathroom"
+    ]
+  },
+  {
+    "category": "crib",
+    "label": "Crib",
+    "cubicFeet": {
+      "s": 15,
+      "m": 20,
+      "l": 28
+    },
+    "commonIn": [
+      "bedroom"
+    ],
+    "handling": [
+      "disassembly"
+    ]
+  },
+  {
+    "category": "changing_table",
+    "label": "Changing table",
+    "cubicFeet": {
+      "s": 9,
+      "m": 14,
+      "l": 20
+    },
+    "commonIn": [
+      "bedroom"
+    ]
+  },
+  {
+    "category": "desk",
+    "label": "Desk",
+    "cubicFeet": {
+      "s": 15,
+      "m": 25,
+      "l": 40
+    },
+    "commonIn": [
+      "office",
+      "bedroom"
+    ],
+    "handling": [
+      "disassembly"
+    ]
+  },
+  {
+    "category": "office_chair",
+    "label": "Office chair",
+    "cubicFeet": {
+      "s": 10,
+      "m": 15,
+      "l": 22
+    },
+    "commonIn": [
+      "office"
+    ]
+  },
+  {
+    "category": "filing_cabinet",
+    "label": "Filing cabinet",
+    "cubicFeet": {
+      "s": 10,
+      "m": 18,
+      "l": 28
+    },
+    "commonIn": [
+      "office",
+      "garage"
+    ]
+  },
+  {
+    "category": "bookcase",
+    "label": "Bookcase / shelving unit",
+    "cubicFeet": {
+      "s": 15,
+      "m": 25,
+      "l": 35
+    },
+    "commonIn": [
+      "living_room",
+      "office",
+      "bedroom"
+    ],
+    "handling": [
+      "disassembly"
+    ]
+  },
+  {
+    "category": "tv",
+    "label": "Television",
+    "cubicFeet": {
+      "s": 4,
+      "m": 8,
+      "l": 14
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom"
+    ],
+    "handling": [
+      "fragile",
+      "high_value"
+    ]
+  },
+  {
+    "category": "tv_stand",
+    "label": "TV stand / media console",
+    "cubicFeet": {
+      "s": 10,
+      "m": 16,
+      "l": 25
+    },
+    "commonIn": [
+      "living_room"
+    ],
+    "handling": [
+      "disassembly"
+    ]
+  },
+  {
+    "category": "floor_lamp",
+    "label": "Floor lamp",
+    "cubicFeet": {
+      "s": 2,
+      "m": 4,
+      "l": 6
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "office"
+    ]
+  },
+  {
+    "category": "table_lamp",
+    "label": "Table lamp",
+    "cubicFeet": {
+      "s": 1,
+      "m": 2,
+      "l": 3
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "office"
+    ]
+  },
+  {
+    "category": "rug",
+    "label": "Area rug",
+    "cubicFeet": {
+      "s": 3,
+      "m": 6,
+      "l": 10
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "dining_room"
+    ]
+  },
+  {
+    "category": "mirror",
+    "label": "Mirror",
+    "cubicFeet": {
+      "s": 2,
+      "m": 4,
+      "l": 7
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "bathroom"
+    ],
+    "handling": [
+      "fragile",
+      "high_value"
+    ]
+  },
+  {
+    "category": "artwork",
+    "label": "Framed artwork",
+    "cubicFeet": {
+      "s": 1,
+      "m": 2,
+      "l": 4
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "office"
+    ],
+    "handling": [
+      "fragile",
+      "high_value"
+    ]
+  },
+  {
+    "category": "fridge",
+    "label": "Refrigerator",
+    "cubicFeet": {
+      "s": 35,
+      "m": 45,
+      "l": 60
+    },
+    "commonIn": [
+      "kitchen",
+      "garage"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "freezer",
+    "label": "Freezer",
+    "cubicFeet": {
+      "s": 20,
+      "m": 35,
+      "l": 50
+    },
+    "commonIn": [
+      "kitchen",
+      "garage",
+      "basement"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "oven",
+    "label": "Oven / range",
+    "cubicFeet": {
+      "s": 25,
+      "m": 35,
+      "l": 45
+    },
+    "commonIn": [
+      "kitchen"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "dishwasher",
+    "label": "Dishwasher",
+    "cubicFeet": {
+      "s": 15,
+      "m": 22,
+      "l": 30
+    },
+    "commonIn": [
+      "kitchen"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "microwave",
+    "label": "Microwave",
+    "cubicFeet": {
+      "s": 3,
+      "m": 5,
+      "l": 8
+    },
+    "commonIn": [
+      "kitchen"
+    ]
+  },
+  {
+    "category": "washer",
+    "label": "Washing machine",
+    "cubicFeet": {
+      "s": 25,
+      "m": 35,
+      "l": 45
+    },
+    "commonIn": [
+      "kitchen",
+      "garage",
+      "basement"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "dryer",
+    "label": "Clothes dryer",
+    "cubicFeet": {
+      "s": 20,
+      "m": 30,
+      "l": 40
+    },
+    "commonIn": [
+      "kitchen",
+      "garage",
+      "basement"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "kitchen_island",
+    "label": "Kitchen island",
+    "cubicFeet": {
+      "s": 25,
+      "m": 40,
+      "l": 60
+    },
+    "commonIn": [
+      "kitchen"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "box_small",
+    "label": "Small box",
+    "cubicFeet": {
+      "s": 1,
+      "m": 1.5,
+      "l": 2
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "kitchen",
+      "garage",
+      "basement",
+      "office"
+    ]
+  },
+  {
+    "category": "box_medium",
+    "label": "Medium box",
+    "cubicFeet": {
+      "s": 2,
+      "m": 3,
+      "l": 4
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "kitchen",
+      "garage",
+      "basement",
+      "office"
+    ]
+  },
+  {
+    "category": "box_large",
+    "label": "Large box",
+    "cubicFeet": {
+      "s": 4,
+      "m": 6,
+      "l": 8
+    },
+    "commonIn": [
+      "living_room",
+      "bedroom",
+      "kitchen",
+      "garage",
+      "basement",
+      "office"
+    ]
+  },
+  {
+    "category": "wardrobe_box",
+    "label": "Wardrobe box",
+    "cubicFeet": {
+      "s": 10,
+      "m": 15,
+      "l": 20
+    },
+    "commonIn": [
+      "bedroom",
+      "garage",
+      "basement"
+    ]
+  },
+  {
+    "category": "bicycle",
+    "label": "Bicycle",
+    "cubicFeet": {
+      "s": 10,
+      "m": 15,
+      "l": 20
+    },
+    "commonIn": [
+      "garage",
+      "basement"
+    ]
+  },
+  {
+    "category": "treadmill",
+    "label": "Treadmill",
+    "cubicFeet": {
+      "s": 30,
+      "m": 45,
+      "l": 60
+    },
+    "commonIn": [
+      "garage",
+      "basement",
+      "bedroom"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "exercise_bike",
+    "label": "Exercise bike",
+    "cubicFeet": {
+      "s": 12,
+      "m": 18,
+      "l": 25
+    },
+    "commonIn": [
+      "garage",
+      "basement",
+      "bedroom"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "elliptical",
+    "label": "Elliptical machine",
+    "cubicFeet": {
+      "s": 25,
+      "m": 35,
+      "l": 50
+    },
+    "commonIn": [
+      "garage",
+      "basement"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "piano_upright",
+    "label": "Upright piano",
+    "cubicFeet": {
+      "s": 35,
+      "m": 50,
+      "l": 65
+    },
+    "commonIn": [
+      "living_room",
+      "dining_room"
+    ],
+    "handling": [
+      "heavy",
+      "high_value",
+      "disassembly"
+    ]
+  },
+  {
+    "category": "piano_grand",
+    "label": "Grand piano",
+    "cubicFeet": {
+      "s": 80,
+      "m": 110,
+      "l": 150
+    },
+    "commonIn": [
+      "living_room",
+      "dining_room"
+    ],
+    "handling": [
+      "heavy",
+      "high_value",
+      "disassembly"
+    ]
+  },
+  {
+    "category": "patio_table",
+    "label": "Patio table",
+    "cubicFeet": {
+      "s": 15,
+      "m": 25,
+      "l": 40
+    },
+    "commonIn": [
+      "other"
+    ]
+  },
+  {
+    "category": "patio_chair",
+    "label": "Patio chair",
+    "cubicFeet": {
+      "s": 4,
+      "m": 7,
+      "l": 10
+    },
+    "commonIn": [
+      "other"
+    ]
+  },
+  {
+    "category": "grill",
+    "label": "Barbecue grill",
+    "cubicFeet": {
+      "s": 12,
+      "m": 20,
+      "l": 35
+    },
+    "commonIn": [
+      "other",
+      "garage"
+    ]
+  },
+  {
+    "category": "tool_chest",
+    "label": "Tool chest",
+    "cubicFeet": {
+      "s": 15,
+      "m": 25,
+      "l": 40
+    },
+    "commonIn": [
+      "garage",
+      "basement"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "lawn_mower",
+    "label": "Lawn mower",
+    "cubicFeet": {
+      "s": 12,
+      "m": 20,
+      "l": 30
+    },
+    "commonIn": [
+      "garage"
+    ],
+    "handling": [
+      "heavy"
+    ]
+  },
+  {
+    "category": "storage_shelf",
+    "label": "Storage shelf",
+    "cubicFeet": {
+      "s": 15,
+      "m": 25,
+      "l": 40
+    },
+    "commonIn": [
+      "garage",
+      "basement"
+    ],
+    "handling": [
+      "disassembly"
+    ]
+  },
+  {
+    "category": "unknown_item",
+    "label": "Other item",
+    "cubicFeet": {
+      "s": 5,
+      "m": 15,
+      "l": 30
+    },
+    "commonIn": [
+      "other"
+    ]
+  }
 ]

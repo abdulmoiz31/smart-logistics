@@ -4,6 +4,8 @@ export type ItemSource = 'ai' | 'refined' | 'user_added';
 
 export type AccessFlag = 'stairs' | 'elevator' | 'long_carry';
 
+export type HandlingFlag = 'fragile' | 'heavy' | 'high_value' | 'disassembly';
+
 export type RoomType =
   | 'living_room'
   | 'bedroom'
@@ -65,6 +67,7 @@ export interface CatalogueEntry {
   label: string;
   cubicFeet: Record<SizeClass, number>;
   commonIn: RoomType[];
+  handling?: HandlingFlag[];
 }
 
 export interface RateCard {

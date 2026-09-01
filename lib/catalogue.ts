@@ -1,5 +1,5 @@
 import rawCatalogue from '../data/catalogue.json';
-import type { CatalogueEntry, RoomType, SizeClass } from './types';
+import type { CatalogueEntry, HandlingFlag, Item, RoomType, SizeClass } from './types';
 
 const entries = rawCatalogue as CatalogueEntry[];
 const byCategory = new Map(entries.map((entry) => [entry.category, entry]));
@@ -29,4 +29,22 @@ export function suggestForRoom(roomType: RoomType): CatalogueEntry[] {
   const relevant = entries.filter((entry) => entry.commonIn.includes(roomType));
   const remaining = entries.filter((entry) => !entry.commonIn.includes(roomType));
   return [...relevant, ...remaining];
+}
+
+export function getHandling(category: string): HandlingFlag[] {
+  return getEntry(category).handling ?? [];
+}
+
+export function handlingSummary(items: Item[]): { flag: HandlingFlag; items: string[] }[] {
+  const map = new Map<HandlingFlag, Set<string>>();
+  for (const item of items) {
+    for (const flag of getHandling(item.category)) {
+      if (!map.has(flag)) map.set(flag, new Set());
+      map.get(flag)!.add(item.name);
+    }
+  }
+  return Array.from(map.entries()).map(([flag, names]) => ({
+    flag,
+    items: Array.from(names),
+  }));
 }
