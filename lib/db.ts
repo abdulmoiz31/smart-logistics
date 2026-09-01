@@ -383,3 +383,54 @@ export async function setSessionEmail(sessionId: string, email: string): Promise
     .eq('id', sessionId);
   if (error) throw new Error(`setSessionEmail failed: ${error.message}`);
 }
+
+export interface LeadsSummary {
+  totalScans: number;
+  estimatedScans: number;
+  confirmedScans: number;
+  medianEstimateCents: number;
+  totalCubicFeet: number;
+  meanEditRate: number;
+  pendingCount: number;
+}
+
+export async function getLeadsSummary(): Promise<LeadsSummary> {
+  const client = db();
+
+  const { data: sessions, error: sessionError } = await client.from('sessions').select('id');
+  if (sessionError) throw new Error(`getLeadsSummary sessions failed: ${sessionError.message}`);
+  const totalScans = (sessions ?? []).length;
+
+  const { data: quotes, error: quoteError } = await client.from('quotes').select();
+  if (quoteError) throw new Error(`getLeadsSummary quotes failed: ${quoteError.message}`);
+  const allQuotes = ((quotes ?? []) as Row[]).map(rowToQuote);
+
+  const estimatedScans = new Set(allQuotes.map((q) => q.sessionId)).size;
+  const confirmedQuotes = allQuotes.filter((q) => q.status === 'confirmed');
+  const confirmedScans = confirmedQuotes.length;
+
+  const subtotals = allQuotes.map((q) => q.breakdown.subtotalCents).sort((a, b) => a - b);
+  const medianEstimateCents = subtotals.length
+    ? subtotals.length % 2 === 0
+      ? (subtotals[subtotals.length / 2 - 1] + subtotals[subtotals.length / 2]) / 2
+      : subtotals[Math.floor(subtotals.length / 2)]
+    : 0;
+
+  const totalCubicFeet = allQuotes.reduce((sum, q) => sum + q.breakdown.totalCubicFeet, 0);
+
+  const editRates: number[] = [];
+  for (const quote of confirmedQuotes) {
+    const rooms = await getSessionRooms(quote.sessionId);
+    const items = rooms.flatMap((r) => r.items);
+    if (items.length) {
+      editRates.push(items.filter((i) => i.editedByUser).length / items.length);
+    }
+  }
+  const meanEditRate = editRates.length
+    ? editRates.reduce((a, b) => a + b, 0) / editRates.length
+    : 0;
+
+  const pendingCount = allQuotes.filter((q) => q.status === 'pending_review').length;
+
+  return { totalScans, estimatedScans, confirmedScans, medianEstimateCents, totalCubicFeet, meanEditRate, pendingCount };
+}
