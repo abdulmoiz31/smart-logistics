@@ -18,9 +18,16 @@ cp .env.local.example .env.local
 Set these values in `.env.local`:
 
 ```bash
+# Recognition models. Rate limits are per-model within a project, so the fallback
+# has its own quota bucket. Limits are NOT per-key — extra keys in one project
+# share one quota. Check your limits at https://aistudio.google.com/rate-limit
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
-MOVESCAN_DEMO_MODE=1
+GEMINI_MODEL=gemini-3.5-flash-lite
+GEMINI_FALLBACK_MODEL=gemini-3.1-flash-lite
+
+# Set to 1 to bypass every model call and serve checked-in fixtures.
+MOVESCAN_DEMO_MODE=0
+
 SUPABASE_URL=
 SUPABASE_SERVICE_KEY=
 AGENT_CONSOLE_SECRET=
@@ -41,9 +48,11 @@ Open the local development server in a phone browser. Use the customer flow:
 3. Review uncertain inventory items and request an estimate.
 4. Open `/agent`, sign in with `AGENT_CONSOLE_SECRET`, and confirm the quote.
 
-## Demo mode and fallback
+## Demo mode and model cascade
 
-Set `MOVESCAN_DEMO_MODE=1` to force fixture inventory and avoid Gemini calls. Missing API credentials and exhausted/failed Gemini requests also fall back to fixtures, with a customer-facing demo-mode banner.
+Set `MOVESCAN_DEMO_MODE=1` to force fixture inventory and avoid Gemini calls. Missing API credentials also trigger demo mode automatically.
+
+The recognition tier uses **Flash-Lite as primary** for quota headroom, not quality. A fallback model (`GEMINI_FALLBACK_MODEL`) has its own quota bucket, so a 429 on the primary escalates to the fallback automatically. If both models fail, the app falls back to fixtures with a customer-facing demo-mode banner. Cross-frame dedupe (counting one object photographed from two angles as one item, not two) is the task most at risk on a Lite model. To escalate quality, set `GEMINI_MODEL=gemini-3.5-flash` — one env var, no code change.
 
 Seed a presentable pending quote for the agent console with:
 
