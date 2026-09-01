@@ -1,0 +1,11 @@
+{
+  "smallBoxesPer100CuFt": 4,
+  "mediumBoxesPer100CuFt": 3,
+  "largeBoxesPer100CuFt": 2,
+  "wardrobeBoxesPer100CuFt": 0.5,
+  "packingPaperLbsPer100CuFt": 5,
+  "bubbleWrapFeetPer100CuFt": 12,
+  "tapeRollsPer20Boxes": 1,
+  "mattressBagsPerMattress": 1,
+  "tvBoxesPerTv": 1
+}
