@@ -211,7 +211,7 @@ export default function ScanPage() {
           <div className="mt-6"><AccessFlags value={accessFlags} onChange={setAccessFlags} /></div>
           <label className="mt-6 grid min-h-32 cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-cyan-300 bg-cyan-50 p-4 text-center transition hover:bg-cyan-100">
             <span><strong className="block text-slate-900">Add photos</strong><span className="mt-1 block text-sm text-slate-600">Up to 12 photos · camera opens on your phone</span></span>
-            <input type="file" accept="image/*" capture="environment" multiple onChange={addPhotos} className="sr-only" />
+            <input type="file" accept="image/*" multiple onChange={addPhotos} className="sr-only" />
           </label>
           {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-950 text-sm text-white" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
           {error && <p role="alert" className="mt-4 text-sm font-medium text-rose-700">{error}</p>}
