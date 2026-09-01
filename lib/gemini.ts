@@ -23,6 +23,7 @@ Critical rules:
 6. Use ambiguousBetween when an item could fit more than one catalogue category.
 7. Choose s, m, or l relative to typical items of that type.
 8. Infer roomType from the photographs.
+9. When you set confidence below 0.7, add "uncertaintyReason": a short plain-English phrase naming what limited you — for example "partly hidden behind the sofa", "only visible from one angle", "could not tell the size". Keep it under 12 words. Do not use it for items you are confident about.
 
 Report honestly. An uncertain item is more useful than a confident guess.
 

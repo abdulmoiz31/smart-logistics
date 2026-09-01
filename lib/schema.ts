@@ -31,6 +31,7 @@ export const ROOM_ANALYSIS_SCHEMA = {
           sizeClass: { type: 'string', enum: SIZE_CLASSES },
           confidence: { type: 'number' },
           ambiguousBetween: { type: 'array', items: { type: 'string' } },
+          uncertaintyReason: { type: 'string' },
         },
         required: ['name', 'category', 'count', 'sizeClass', 'confidence'],
       },
@@ -73,6 +74,9 @@ function parseItem(raw: unknown): DetectedItem | null {
   const ambiguousBetween = Array.isArray(value.ambiguousBetween)
     ? value.ambiguousBetween.filter((entry): entry is string => typeof entry === 'string')
     : undefined;
+  const uncertaintyReason = typeof value.uncertaintyReason === 'string' && value.uncertaintyReason.trim()
+    ? value.uncertaintyReason.trim().slice(0, 120)
+    : undefined;
 
   return {
     name: value.name.trim(),
@@ -81,6 +85,7 @@ function parseItem(raw: unknown): DetectedItem | null {
     sizeClass,
     confidence,
     ...(ambiguousBetween?.length ? { ambiguousBetween } : {}),
+    ...(uncertaintyReason ? { uncertaintyReason } : {}),
   };
 }
 

@@ -54,6 +54,9 @@ function rowToItem(row: Row): Item {
     ...(Array.isArray(row.ambiguous_between) && row.ambiguous_between.length
       ? { ambiguousBetween: row.ambiguous_between.map(String) }
       : {}),
+    ...(typeof row.uncertainty_reason === 'string' && row.uncertainty_reason
+      ? { uncertaintyReason: row.uncertainty_reason }
+      : {}),
   };
 }
 
@@ -171,6 +174,7 @@ export async function replaceItems(roomId: string, items: ItemInput[]): Promise<
     source: item.source,
     edited_by_user: item.editedByUser,
     ambiguous_between: item.ambiguousBetween ?? null,
+    uncertainty_reason: item.uncertaintyReason ?? null,
   }));
   const { data, error } = await client.from('items').insert(rows).select();
   if (error) throw new Error(`replaceItems insert failed: ${error.message}`);

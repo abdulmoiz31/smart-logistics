@@ -35,6 +35,7 @@ create table items (
   source text not null default 'ai' check (source in ('ai', 'refined', 'user_added')),
   edited_by_user boolean not null default false,
   ambiguous_between text[],
+  uncertainty_reason text,
   created_at timestamptz not null default now()
 );
 

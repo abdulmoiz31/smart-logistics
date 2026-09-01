@@ -44,6 +44,36 @@ describe('parseRoomAnalysis', () => {
     expect(() => parseRoomAnalysis({ roomType: 'bedroom', items: 'items' })).toThrow(SchemaError);
     expect(() => parseRoomAnalysis(null)).toThrow(SchemaError);
   });
+
+  it('preserves a valid uncertaintyReason', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'mystery item', category: 'unknown_item', count: 1, sizeClass: 'm', confidence: 0.4, uncertaintyReason: 'partly hidden' }],
+    });
+    expect(analysis.items[0].uncertaintyReason).toBe('partly hidden');
+  });
+
+  it('drops a non-string uncertaintyReason', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'thing', category: 'armchair', count: 1, sizeClass: 'm', confidence: 0.5, uncertaintyReason: 42 }],
+    });
+    expect(analysis.items[0].uncertaintyReason).toBeUndefined();
+  });
+
+  it('drops an empty-string uncertaintyReason', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'thing', category: 'armchair', count: 1, sizeClass: 'm', confidence: 0.5, uncertaintyReason: '   ' }],
+    });
+    expect(analysis.items[0].uncertaintyReason).toBeUndefined();
+  });
+
+  it('preserves uncertaintyReason from the fixture', () => {
+    const analysis = parseRoomAnalysis(livingRoom);
+    const chair = analysis.items.find((i) => i.category === 'armchair');
+    expect(chair?.uncertaintyReason).toBe('partly hidden behind the sofa');
+  });
 });
 
 describe('parseRefinement', () => {
