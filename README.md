@@ -12,10 +12,11 @@ MoveScan is a mobile-first moving survey demo. Customers photograph rooms, check
 
 ```bash
 npm install
-cp .env.local.example .env.local
+touch .env.local
 ```
 
-Set these values in `.env.local`:
+No env template is committed — every `.env*` file is gitignored without exception, so a
+real key can never reach the repository. Create `.env.local` yourself with these keys:
 
 ```bash
 # Recognition models. Rate limits are per-model within a project, so the fallback
@@ -33,7 +34,35 @@ SUPABASE_SERVICE_KEY=
 AGENT_CONSOLE_SECRET=
 ```
 
-Run `db/schema.sql` once in the Supabase SQL editor, then create a private Storage bucket named `captures`. Keep `SUPABASE_SERVICE_KEY` server-only; never expose it as a public browser variable.
+### Where each value comes from
+
+| Variable | Source |
+|---|---|
+| `GEMINI_API_KEY` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → *Get API key*. Free tier. |
+| `GEMINI_MODEL` / `GEMINI_FALLBACK_MODEL` | Model ids above. Not secrets. |
+| `MOVESCAN_DEMO_MODE` | `0` calls the real API, `1` serves fixtures. |
+| `SUPABASE_URL` | Supabase → Settings → API → **Project URL**. Base origin only — no `/rest/v1/` suffix. |
+| `SUPABASE_SERVICE_KEY` | Same page → the **secret** key (`sb_secret_…`), not the publishable/anon key. |
+| `AGENT_CONSOLE_SECRET` | You choose it. Generate with `openssl rand -hex 16`. |
+
+A `SUPABASE_URL` with a `/rest/v1/` suffix returns **401**, not a routing error — so this
+misconfiguration impersonates a bad key. Check the URL before suspecting the key.
+
+Then run `db/schema.sql` once in the Supabase SQL editor and create a **private** Storage
+bucket named exactly `captures` — `lib/db.ts` hardcodes that name, so a typo surfaces as a
+vague upload failure rather than a clear error.
+
+Verify all four at once:
+
+```bash
+npm run seed-demo
+```
+
+If the seed completes, the URL, key, schema, and bucket are all correct — it exercises
+every one of them, and fails with the real Postgres or Storage error if not.
+
+`SUPABASE_SERVICE_KEY` bypasses Row Level Security. It is confined to `lib/db.ts` and
+server-side route handlers. Never expose it as a `NEXT_PUBLIC_` variable.
 
 ## Run locally
 
