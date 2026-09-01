@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { PriceRange } from '@/components/PriceRange';
+import { MovingPlan } from '@/components/MovingPlan';
+import { planTruckAndCrew, planPackingMaterials, describeVolume } from '@/lib/moving-plan';
+import { handlingSummary } from '@/lib/catalogue';
 import { formatCents } from '@/lib/pricing';
 import type { Quote, SessionDetails } from '@/lib/types';
 
@@ -83,6 +86,15 @@ export default function EstimatePage() {
   const { breakdown } = quote;
   const confirmed = quote.status === 'confirmed' && quote.confirmedCents !== undefined;
 
+  const allItems = session?.rooms.flatMap((room) => room.items) ?? [];
+  const allAccessFlags = Array.from(new Set(
+    session?.rooms.flatMap((room) => room.accessFlags) ?? [],
+  ));
+  const truckPlan = planTruckAndCrew(breakdown.totalCubicFeet, allAccessFlags);
+  const packing = planPackingMaterials(allItems);
+  const handling = handlingSummary(allItems);
+  const volumeContext = describeVolume(breakdown.totalCubicFeet);
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-3xl">
@@ -91,6 +103,7 @@ export default function EstimatePage() {
         <p className="mt-2 text-slate-600">Based on {Math.round(breakdown.totalCubicFeet)} cubic feet across your photographed rooms.</p>
         <section className="mt-6">{confirmed ? <div className="rounded-3xl bg-emerald-700 p-6 text-white"><p className="text-sm font-bold uppercase tracking-[0.16em] text-emerald-100">Confirmed price</p><p className="mt-3 text-4xl font-black">{formatCents(quote.confirmedCents!)}</p><p className="mt-3 text-sm text-emerald-100">Confirmed by your moving specialist.</p></div> : <PriceRange lowCents={breakdown.lowCents} highCents={breakdown.highCents} tolerance={breakdown.tolerance} />}</section>
         <section className="mt-5 rounded-2xl bg-white p-5 shadow-sm"><h2 className="font-black text-slate-950">Estimate details</h2><dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-500">Volume</dt><dd className="font-bold">{breakdown.totalCubicFeet} cu ft</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">Base moving cost</dt><dd className="font-bold">{formatCents(breakdown.baseCents)}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">Crew labor</dt><dd className="font-bold">{formatCents(breakdown.laborCents)}</dd></div><div className="flex justify-between gap-4"><dt className="text-slate-500">Access adders</dt><dd className="font-bold">{formatCents(breakdown.accessCents)}</dd></div></dl></section>
+        <MovingPlan plan={truckPlan} packing={packing} handling={handling} volumeContext={volumeContext} />
         {!confirmed && <section className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50 p-5"><h2 className="font-black text-slate-950">Send this estimate to yourself</h2>{submitted ? <p className="mt-2 text-slate-700">A mover will confirm your price within 2 hours.</p> : <><p className="mt-2 text-sm text-slate-600">Email is only used to send your estimate and coordinate confirmation.</p><div className="mt-4 flex flex-col gap-3 sm:flex-row"><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="min-h-11 flex-1 rounded-xl border border-slate-300 bg-white px-3" /><button type="button" onClick={() => void submitEmail()} disabled={sending} className="min-h-11 rounded-xl bg-cyan-700 px-4 font-bold text-white disabled:opacity-60">{sending ? 'Sending…' : 'Send me this estimate'}</button></div></>}</section>}
         {error && <p role="alert" className="mt-4 text-sm font-semibold text-rose-700">{error}</p>}
         <p className="mt-6 text-center text-sm leading-6 text-slate-500">This is an estimate based on your photos. Your final price is confirmed by a moving specialist.</p>
