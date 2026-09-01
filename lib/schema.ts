@@ -32,6 +32,7 @@ export const ROOM_ANALYSIS_SCHEMA = {
           confidence: { type: 'number' },
           ambiguousBetween: { type: 'array', items: { type: 'string' } },
           uncertaintyReason: { type: 'string' },
+          seenInImages: { type: 'array', items: { type: 'integer' } },
         },
         required: ['name', 'category', 'count', 'sizeClass', 'confidence'],
       },
@@ -54,7 +55,7 @@ function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
-function parseItem(raw: unknown): DetectedItem | null {
+function parseItem(raw: unknown, imageCount: number): DetectedItem | null {
   if (typeof raw !== 'object' || raw === null) return null;
   const value = raw as Record<string, unknown>;
   if (typeof value.name !== 'string' || value.name.trim() === '') return null;
@@ -77,6 +78,11 @@ function parseItem(raw: unknown): DetectedItem | null {
   const uncertaintyReason = typeof value.uncertaintyReason === 'string' && value.uncertaintyReason.trim()
     ? value.uncertaintyReason.trim().slice(0, 120)
     : undefined;
+  const seenInImages = Array.isArray(value.seenInImages)
+    ? value.seenInImages.filter(
+        (n): n is number => Number.isInteger(n) && n >= 1 && n <= imageCount,
+      )
+    : undefined;
 
   return {
     name: value.name.trim(),
@@ -86,10 +92,11 @@ function parseItem(raw: unknown): DetectedItem | null {
     confidence,
     ...(ambiguousBetween?.length ? { ambiguousBetween } : {}),
     ...(uncertaintyReason ? { uncertaintyReason } : {}),
+    ...(seenInImages?.length ? { seenInImages } : {}),
   };
 }
 
-export function parseRoomAnalysis(raw: unknown): RoomAnalysis {
+export function parseRoomAnalysis(raw: unknown, imageCount = 12): RoomAnalysis {
   if (typeof raw !== 'object' || raw === null) {
     throw new SchemaError('response is not an object');
   }
@@ -102,7 +109,7 @@ export function parseRoomAnalysis(raw: unknown): RoomAnalysis {
     roomType: ROOM_TYPES.includes(value.roomType as RoomType)
       ? (value.roomType as RoomType)
       : 'other',
-    items: value.items.map(parseItem).filter((item): item is DetectedItem => item !== null),
+    items: value.items.map((item) => parseItem(item, imageCount)).filter((item): item is DetectedItem => item !== null),
   };
 }
 

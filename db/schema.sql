@@ -36,6 +36,7 @@ create table items (
   edited_by_user boolean not null default false,
   ambiguous_between text[],
   uncertainty_reason text,
+  seen_in_images integer[],
   created_at timestamptz not null default now()
 );
 

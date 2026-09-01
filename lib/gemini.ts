@@ -24,6 +24,7 @@ Critical rules:
 7. Choose s, m, or l relative to typical items of that type.
 8. Infer roomType from the photographs.
 9. When you set confidence below 0.7, add "uncertaintyReason": a short plain-English phrase naming what limited you — for example "partly hidden behind the sofa", "only visible from one angle", "could not tell the size". Keep it under 12 words. Do not use it for items you are confident about.
+10. For each item add "seenInImages": the 1-based numbers of the photographs the object appears in. If the same object appears in photographs 2 and 4, report the item once with "seenInImages": [2, 4]. This is how you show your counting is correct.
 
 Report honestly. An uncertain item is more useful than a confident guess.
 
@@ -171,12 +172,14 @@ export async function analyzeRoom(images: ImageInput[], hint?: RoomType): Promis
     return { analysis: fixtureFor(hint), demoMode: true, degraded: false, modelUsed: null };
   }
 
+  const ordered = [...images].reverse();
+  const imageCount = ordered.length;
   const outcome = await cascade(async (model, repair) => parseRoomAnalysis(await callGemini(
     model,
     repair ? `${ANALYZE_PROMPT}\n\nYour previous response was invalid. Reply with only a JSON object matching the schema.` : ANALYZE_PROMPT,
-    images,
+    ordered,
     ROOM_ANALYSIS_SCHEMA,
-  )));
+  ), imageCount));
 
   return outcome.value
     ? { analysis: outcome.value, demoMode: false, degraded: outcome.degraded, modelUsed: outcome.modelUsed }

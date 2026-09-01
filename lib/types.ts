@@ -33,6 +33,7 @@ export interface Item {
   editedByUser: boolean;
   ambiguousBetween?: string[];
   uncertaintyReason?: string;
+  seenInImages?: number[];
 }
 
 export interface DetectedItem {
@@ -43,6 +44,7 @@ export interface DetectedItem {
   confidence: number;
   ambiguousBetween?: string[];
   uncertaintyReason?: string;
+  seenInImages?: number[];
 }
 
 export interface RoomAnalysis {

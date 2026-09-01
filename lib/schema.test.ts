@@ -74,6 +74,30 @@ describe('parseRoomAnalysis', () => {
     const chair = analysis.items.find((i) => i.category === 'armchair');
     expect(chair?.uncertaintyReason).toBe('partly hidden behind the sofa');
   });
+
+  it('preserves valid seenInImages indices', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, seenInImages: [1, 3] }],
+    }, 5);
+    expect(analysis.items[0].seenInImages).toEqual([1, 3]);
+  });
+
+  it('drops out-of-range seenInImages indices', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, seenInImages: [0, 99] }],
+    }, 5);
+    expect(analysis.items[0].seenInImages).toBeUndefined();
+  });
+
+  it('drops non-integer seenInImages values', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, seenInImages: ['two', 1.5] }],
+    }, 5);
+    expect(analysis.items[0].seenInImages).toBeUndefined();
+  });
 });
 
 describe('parseRefinement', () => {

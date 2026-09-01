@@ -19,6 +19,11 @@ export function ItemRow({ item, onChange, onRemove, busy = false }: ItemRowProps
         <div>
           <h3 className="font-semibold text-slate-900">{formatLabel(item.name)}</h3>
           <p className="mt-0.5 text-sm text-slate-500">{item.cubicFeet} cu ft each</p>
+          {item.seenInImages?.length ? (
+            <p className="mt-0.5 text-xs text-slate-400">
+              Seen in {item.seenInImages.length === 1 ? 'photo' : 'photos'} {item.seenInImages.join(item.seenInImages.length === 2 ? ' and ' : ', ')} · counted once
+            </p>
+          ) : null}
         </div>
         <button
           type="button"
