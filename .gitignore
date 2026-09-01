@@ -40,3 +40,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE / agent local settings - may contain access tokens
+.qoder/
+.vscode/
+.idea/
