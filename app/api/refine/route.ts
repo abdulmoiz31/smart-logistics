@@ -20,15 +20,22 @@ export async function POST(request: Request) {
       item.name,
       candidates,
     );
+
+    if (refinement.demoMode) {
+      return Response.json({ item, demoMode: true, degraded: refinement.degraded, refined: false });
+    }
+
+    const allowed = new Set(candidates);
+    const category = allowed.has(refinement.category) ? refinement.category : item.category;
     const updated = await updateItem(item.id, {
-      category: refinement.category,
+      category,
       sizeClass: refinement.sizeClass,
       confidence: refinement.confidence,
-      cubicFeet: resolveCubicFeet(refinement.category, refinement.sizeClass),
+      cubicFeet: resolveCubicFeet(category, refinement.sizeClass),
       source: 'refined',
       ambiguousBetween: [],
     }, false);
-    return Response.json({ item: updated, demoMode: refinement.demoMode });
+    return Response.json({ item: updated, demoMode: false, degraded: refinement.degraded, refined: true });
   } catch (error) {
     console.error('POST /api/refine failed', error);
     return Response.json({ error: 'Unable to refine this item.' }, { status: 500 });
