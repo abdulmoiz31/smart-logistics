@@ -27,7 +27,7 @@ export async function POST(request: Request) {
       cubicFeet: resolveCubicFeet(refinement.category, refinement.sizeClass),
       source: 'refined',
       ambiguousBetween: [],
-    });
+    }, false);
     return Response.json({ item: updated, demoMode: refinement.demoMode });
   } catch (error) {
     console.error('POST /api/refine failed', error);

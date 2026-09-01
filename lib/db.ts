@@ -177,7 +177,7 @@ export async function replaceItems(roomId: string, items: ItemInput[]): Promise<
   return ((data ?? []) as Row[]).map(rowToItem);
 }
 
-export async function updateItem(itemId: string, patch: ItemPatch): Promise<Item> {
+export async function updateItem(itemId: string, patch: ItemPatch, markEdited = true): Promise<Item> {
   const update = {
     ...(patch.name === undefined ? {} : { name: patch.name }),
     ...(patch.category === undefined ? {} : { category: patch.category }),
@@ -187,7 +187,7 @@ export async function updateItem(itemId: string, patch: ItemPatch): Promise<Item
     ...(patch.confidence === undefined ? {} : { confidence: patch.confidence }),
     ...(patch.source === undefined ? {} : { source: patch.source }),
     ...(patch.ambiguousBetween === undefined ? {} : { ambiguous_between: patch.ambiguousBetween }),
-    edited_by_user: true,
+    ...(markEdited ? { edited_by_user: true } : {}),
   };
   const { data, error } = await db().from('items').update(update).eq('id', itemId).select().single();
   if (error) throw new Error(`updateItem failed: ${error.message}`);
