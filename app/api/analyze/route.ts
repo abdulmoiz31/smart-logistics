@@ -1,3 +1,4 @@
+import { resolveRoomType } from './room-type';
 import { getCaptureBase64, replaceItems, saveCapture, updateRoomType } from '@/lib/db';
 import { analyzeRoom } from '@/lib/gemini';
 import { resolveCubicFeet } from '@/lib/catalogue';
@@ -40,8 +41,9 @@ export async function POST(request: Request) {
       source: 'ai' as const,
       editedByUser: false,
     })));
-    await updateRoomType(roomId, result.analysis.roomType);
-    return Response.json({ items, roomType: result.analysis.roomType, demoMode: result.demoMode, degraded: result.degraded });
+    const finalRoomType = resolveRoomType(hint, result.analysis.roomType);
+    await updateRoomType(roomId, finalRoomType);
+    return Response.json({ items, roomType: finalRoomType, demoMode: result.demoMode, degraded: result.degraded });
   } catch (error) {
     console.error('POST /api/analyze failed', error);
     return Response.json({ error: 'Unable to analyse this room. Please try again.' }, { status: 500 });
