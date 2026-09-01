@@ -9,6 +9,7 @@ import { planTruckAndCrew, planPackingMaterials, describeVolume } from '@/lib/mo
 import { handlingSummary } from '@/lib/catalogue';
 import { formatCents } from '@/lib/pricing';
 import type { Quote, SessionDetails } from '@/lib/types';
+import './print.css';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -106,6 +107,7 @@ export default function EstimatePage() {
         <MovingPlan plan={truckPlan} packing={packing} handling={handling} volumeContext={volumeContext} />
         {!confirmed && <section className="mt-5 rounded-2xl border border-cyan-200 bg-cyan-50 p-5"><h2 className="font-black text-slate-950">Send this estimate to yourself</h2>{submitted ? <p className="mt-2 text-slate-700">A mover will confirm your price within 2 hours.</p> : <><p className="mt-2 text-sm text-slate-600">Email is only used to send your estimate and coordinate confirmation.</p><div className="mt-4 flex flex-col gap-3 sm:flex-row"><input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="min-h-11 flex-1 rounded-xl border border-slate-300 bg-white px-3" /><button type="button" onClick={() => void submitEmail()} disabled={sending} className="min-h-11 rounded-xl bg-cyan-700 px-4 font-bold text-white disabled:opacity-60">{sending ? 'Sending…' : 'Send me this estimate'}</button></div></>}</section>}
         {error && <p role="alert" className="mt-4 text-sm font-semibold text-rose-700">{error}</p>}
+        <div className="mt-6 text-center"><button type="button" onClick={() => window.print()} className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-50">Print or save as PDF</button></div>
         <p className="mt-6 text-center text-sm leading-6 text-slate-500">This is an estimate based on your photos. Your final price is confirmed by a moving specialist.</p>
         {session?.customerEmail && <p className="mt-2 text-center text-xs text-slate-400">Estimate requested for {session.customerEmail}</p>}
       </div>
