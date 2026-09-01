@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { AccessFlags } from '@/components/AccessFlags';
@@ -45,6 +45,39 @@ export default function ScanPage() {
     [roomType],
   );
 
+  const creatingRoomRef = useRef(false);
+
+  const createRoom = useCallback(async () => {
+    if (creatingRoomRef.current) return;
+    creatingRoomRef.current = true;
+    try {
+    const response = await fetch('/api/room', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sessionId, roomType: 'other' }),
+    });
+    const data = await response.json() as { roomId?: string; error?: string };
+    if (!response.ok || !data.roomId) throw new Error(data.error ?? 'Unable to add a room.');
+    const nextRoom: Room = {
+      id: data.roomId,
+      sessionId,
+      roomType: 'other',
+      accessFlags: [],
+      items: [],
+    };
+    setRoom(nextRoom);
+    setRoomType('other');
+    setAccessFlags([]);
+    setPhotos([]);
+    setItems([]);
+    setDemoMode(false);
+    setDegraded(false);
+    setPickerOpen(false);
+    } finally {
+      creatingRoomRef.current = false;
+    }
+  }, [sessionId]);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -70,32 +103,7 @@ export default function ScanPage() {
     }
     void load();
     return () => { cancelled = true; };
-  }, [sessionId]);
-
-  async function createRoom() {
-    const response = await fetch('/api/room', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sessionId, roomType: 'other' }),
-    });
-    const data = await response.json() as { roomId?: string; error?: string };
-    if (!response.ok || !data.roomId) throw new Error(data.error ?? 'Unable to add a room.');
-    const nextRoom: Room = {
-      id: data.roomId,
-      sessionId,
-      roomType: 'other',
-      accessFlags: [],
-      items: [],
-    };
-    setRoom(nextRoom);
-    setRoomType('other');
-    setAccessFlags([]);
-    setPhotos([]);
-    setItems([]);
-    setDemoMode(false);
-    setDegraded(false);
-    setPickerOpen(false);
-  }
+  }, [sessionId, createRoom]);
 
   async function addPhotos(event: ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(event.target.files ?? []);
@@ -124,6 +132,7 @@ export default function ScanPage() {
 
   async function analyse() {
     if (!room || !photos.length) return;
+    if (items.length > 0 && !window.confirm('Re-analysing replaces the changes you made to this room. Continue?')) return;
     setAnalysing(true);
     setError('');
     try {

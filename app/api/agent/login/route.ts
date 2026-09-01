@@ -4,7 +4,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json() as Record<string, unknown>;
     const expectedSecret = process.env.AGENT_CONSOLE_SECRET;
-    if (!expectedSecret || typeof body.password !== 'string' || body.password !== expectedSecret) {
+    if (!expectedSecret) {
+      console.error('AGENT_CONSOLE_SECRET is not set');
+      return NextResponse.json(
+        { error: 'Agent console is not configured. Set AGENT_CONSOLE_SECRET.' },
+        { status: 503 },
+      );
+    }
+    if (typeof body.password !== 'string' || body.password !== expectedSecret) {
       return NextResponse.json({ error: 'Incorrect password.' }, { status: 401 });
     }
     const response = NextResponse.json({ ok: true });
