@@ -1,0 +1,6 @@
+[
+  { "label": "Cargo van",        "feet": 10, "maxCubicFeet": 250,  "crewSize": 2 },
+  { "label": "16ft box truck",   "feet": 16, "maxCubicFeet": 800,  "crewSize": 2 },
+  { "label": "20ft box truck",   "feet": 20, "maxCubicFeet": 1200, "crewSize": 3 },
+  { "label": "26ft box truck",   "feet": 26, "maxCubicFeet": 1800, "crewSize": 4 }
+]
