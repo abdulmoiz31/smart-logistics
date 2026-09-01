@@ -24,7 +24,21 @@ Critical rules:
 7. Choose s, m, or l relative to typical items of that type.
 8. Infer roomType from the photographs.
 
-Report honestly. An uncertain item is more useful than a confident guess.`;
+Report honestly. An uncertain item is more useful than a confident guess.
+
+How to count correctly:
+Work object by object, not photograph by photograph. For each object you see, ask
+whether you have already recorded that same physical object from another angle. Use
+position in the room, colour, material, and neighbouring objects to decide.
+
+Worked example. Given three photographs where a grey sofa is visible in the first two
+from different angles, and a single armchair appears in the third:
+  correct   -> [{ "name": "grey sofa", "count": 1 }, { "name": "armchair", "count": 1 }]
+  incorrect -> [{ "name": "grey sofa", "count": 2 }, { "name": "armchair", "count": 1 }]
+The sofa is one object photographed twice, not two sofas.
+
+If you cannot tell whether two views show the same object or two similar objects,
+record the lower count and set confidence below 0.7.`;
 
 export interface AnalyzeResult {
   analysis: RoomAnalysis;
