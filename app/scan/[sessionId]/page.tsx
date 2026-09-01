@@ -119,7 +119,20 @@ export default function ScanPage() {
         return { file, preview: URL.createObjectURL(file) };
       }
     }));
-    setPhotos((current) => [...current, ...prepared]);
+    const MAX_TOTAL_BYTES = 3.5 * 1024 * 1024;
+    const existingBytes = photos.reduce((sum, p) => sum + p.file.size, 0);
+    let budget = MAX_TOTAL_BYTES - existingBytes;
+    const trimmed: LocalPhoto[] = [];
+    for (const photo of prepared) {
+      if (budget - photo.file.size < 0) break;
+      budget -= photo.file.size;
+      trimmed.push(photo);
+    }
+    if (trimmed.length < prepared.length) {
+      setError('That is a lot of photos — analysing the first batch. You can add more after.');
+      prepared.slice(trimmed.length).forEach((p) => URL.revokeObjectURL(p.preview));
+    }
+    setPhotos((current) => [...current, ...trimmed]);
     event.target.value = '';
   }
 

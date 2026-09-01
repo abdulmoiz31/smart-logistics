@@ -24,8 +24,8 @@ export async function POST(request: Request) {
     }
     if (!files.length) return Response.json({ error: 'At least one image is required.' }, { status: 400 });
     if (files.length > 12) return Response.json({ error: 'Upload no more than 12 images.' }, { status: 400 });
-    if (files.some((file) => !file.type.startsWith('image/') || file.size > 4 * 1024 * 1024)) {
-      return Response.json({ error: 'Each upload must be an image no larger than 4 MB.' }, { status: 400 });
+    if (files.some((file) => !file.type.startsWith('image/') || file.size > 1 * 1024 * 1024)) {
+      return Response.json({ error: 'Each upload must be an image no larger than 1 MB.' }, { status: 400 });
     }
 
     await Promise.all(files.map(async (file) => {
