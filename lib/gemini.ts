@@ -154,6 +154,7 @@ async function callGemini(
         responseMimeType: 'application/json',
         responseJsonSchema,
         temperature: 0.1,
+        abortSignal: controller.signal,
       },
     });
     const text = response.text;

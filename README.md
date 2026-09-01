@@ -99,7 +99,7 @@ npm test
 npm run build
 ```
 
-Before a live demo, complete the customer-to-agent journey three times on the demo phone and venue network. Test forced fallback mode once with an invalid Gemini key, and ensure the agent queue is populated with `npm run seed-demo`.
+Before a live demo, run one complete production scan within two minutes of presenting to warm the hosting, database, and model connections. Then complete the customer-to-agent journey three times on the demo phone and venue network. Test forced fallback mode once with an invalid Gemini key, and ensure the agent queue is populated with `npm run seed-demo`.
 
 ## Deployment
 

@@ -1,6 +1,7 @@
 import { deleteItem, getItem, updateItem } from '@/lib/db';
 import { getEntry, resolveCubicFeet } from '@/lib/catalogue';
 import type { SizeClass } from '@/lib/types';
+import { isUuid } from '@/lib/validation';
 
 const sizeClasses: SizeClass[] = ['s', 'm', 'l'];
 
@@ -10,6 +11,7 @@ export async function PATCH(
 ) {
   try {
     const { itemId } = await params;
+    if (!isUuid(itemId)) return Response.json({ error: 'Invalid item ID.' }, { status: 400 });
     const body = await request.json() as Record<string, unknown>;
     const current = await getItem(itemId);
     if (!current) return Response.json({ error: 'Item not found.' }, { status: 404 });
@@ -44,6 +46,7 @@ export async function DELETE(
 ) {
   try {
     const { itemId } = await params;
+    if (!isUuid(itemId)) return Response.json({ error: 'Invalid item ID.' }, { status: 400 });
     await deleteItem(itemId);
     return Response.json({ ok: true });
   } catch (error) {

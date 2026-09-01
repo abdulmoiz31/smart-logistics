@@ -16,7 +16,8 @@ export function computeTolerance(items: Item[]): number {
     return next;
   }, TOLERANCE_FLOOR);
 
-  return Math.min(TOLERANCE_CEILING, Math.max(TOLERANCE_FLOOR, tolerance));
+  const boundedTolerance = Math.min(TOLERANCE_CEILING, Math.max(TOLERANCE_FLOOR, tolerance));
+  return Math.round(boundedTolerance * 100) / 100;
 }
 
 export function priceQuote(

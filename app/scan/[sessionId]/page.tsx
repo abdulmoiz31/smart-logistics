@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { AccessFlags } from '@/components/AccessFlags';
@@ -26,6 +26,14 @@ interface LocalPhoto {
   preview: string;
 }
 
+const analysisStages = [
+  'Saving room settings…',
+  'Uploading photos…',
+  'Looking for furniture…',
+  'Checking for duplicates across your photos…',
+  'Matching to our catalogue…',
+];
+
 export default function ScanPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [room, setRoom] = useState<Room>();
@@ -35,17 +43,25 @@ export default function ScanPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [analysing, setAnalysing] = useState(false);
+  const [analysisStage, setAnalysisStage] = useState(0);
   const [demoMode, setDemoMode] = useState(false);
   const [degraded, setDegraded] = useState(false);
   const [error, setError] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  const roomLabel = useMemo(
-    () => roomTypes.find((entry) => entry.value === roomType)?.label ?? 'room',
-    [roomType],
-  );
-
   const creatingRoomRef = useRef(false);
+
+  useEffect(() => {
+    if (!analysing) {
+      setAnalysisStage(0);
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setAnalysisStage((stage) => (stage + 1) % analysisStages.length);
+    }, 2_500);
+    return () => window.clearInterval(timer);
+  }, [analysing]);
 
   const createRoom = useCallback(async () => {
     if (creatingRoomRef.current) return;
@@ -147,13 +163,18 @@ export default function ScanPage() {
     if (!room || !photos.length) return;
     if (items.length > 0 && !window.confirm('Re-analysing replaces the changes you made to this room. Continue?')) return;
     setAnalysing(true);
+    setAnalysisStage(0);
     setError('');
     try {
-      await fetch(`/api/room/${room.id}`, {
+      const roomResponse = await fetch(`/api/room/${room.id}`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ roomType, accessFlags }),
       });
+      const roomData = await roomResponse.json() as { error?: string };
+      if (!roomResponse.ok) throw new Error(roomData.error ?? 'Unable to save this room.');
+
+      setAnalysisStage(1);
       const formData = new FormData();
       formData.append('roomId', room.id);
       formData.append('roomType', roomType);
@@ -210,13 +231,13 @@ export default function ScanPage() {
           </label>
           <div className="mt-6"><AccessFlags value={accessFlags} onChange={setAccessFlags} /></div>
           <label className="mt-6 grid min-h-32 cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-cyan-300 bg-cyan-50 p-4 text-center transition hover:bg-cyan-100">
-            <span><strong className="block text-slate-900">Add photos</strong><span className="mt-1 block text-sm text-slate-600">Up to 12 photos · camera opens on your phone</span></span>
+            <span><strong className="block text-slate-900">Add photos</strong><span className="mt-1 block text-sm text-slate-600">Up to 12 photos · choose from your camera or photo library</span></span>
             <input type="file" accept="image/*" multiple onChange={addPhotos} className="sr-only" />
           </label>
           {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-950 text-sm text-white" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
           {error && <p role="alert" className="mt-4 text-sm font-medium text-rose-700">{error}</p>}
           <button type="button" disabled={!photos.length || analysing} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-cyan-700 px-5 font-bold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300">
-            {analysing ? `Looking at ${photos.length} photo${photos.length === 1 ? '' : 's'} of your ${roomLabel.toLowerCase()}…` : 'Analyse this room'}
+            {analysing ? analysisStages[analysisStage] : 'Analyse this room'}
           </button>
         </section>
         {items.length > 0 && <section className="mt-5 rounded-3xl border border-emerald-200 bg-emerald-50 p-5"><h2 className="font-bold text-emerald-950">We found {items.length} item{items.length === 1 ? '' : 's'}.</h2><p className="mt-1 text-sm text-emerald-900">You&apos;ll be able to check every item before your estimate.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => void createRoom()} className="min-h-11 rounded-xl border border-emerald-300 bg-white font-semibold text-emerald-900">Add another room</button><Link href={`/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-emerald-700 font-semibold text-white">Review my inventory</Link></div></section>}

@@ -1,5 +1,6 @@
 import { setAccessFlags, updateRoomType } from '@/lib/db';
 import type { AccessFlag, RoomType } from '@/lib/types';
+import { isUuid } from '@/lib/validation';
 
 const roomTypes: RoomType[] = [
   'living_room', 'bedroom', 'kitchen', 'dining_room', 'bathroom',
@@ -13,6 +14,7 @@ export async function PATCH(
 ) {
   try {
     const { roomId } = await params;
+    if (!isUuid(roomId)) return Response.json({ error: 'Invalid room ID.' }, { status: 400 });
     const body = await request.json() as Record<string, unknown>;
     if (body.roomType !== undefined) {
       if (!roomTypes.includes(body.roomType as RoomType)) {

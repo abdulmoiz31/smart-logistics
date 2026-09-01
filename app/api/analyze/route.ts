@@ -2,6 +2,7 @@ import { getCaptureBase64, replaceItems, saveCapture, updateRoomType } from '@/l
 import { analyzeRoom } from '@/lib/gemini';
 import { resolveCubicFeet } from '@/lib/catalogue';
 import type { RoomType } from '@/lib/types';
+import { isUuid } from '@/lib/validation';
 
 const roomTypes: RoomType[] = [
   'living_room', 'bedroom', 'kitchen', 'dining_room', 'bathroom',
@@ -19,8 +20,8 @@ export async function POST(request: Request) {
     const roomTypeValue = formData.get('roomType');
     const hint = roomTypes.includes(roomTypeValue as RoomType) ? roomTypeValue as RoomType : undefined;
 
-    if (typeof roomId !== 'string' || !roomId) {
-      return Response.json({ error: 'roomId is required.' }, { status: 400 });
+    if (!isUuid(roomId)) {
+      return Response.json({ error: 'A valid roomId is required.' }, { status: 400 });
     }
     if (!files.length) return Response.json({ error: 'At least one image is required.' }, { status: 400 });
     if (files.length > 12) return Response.json({ error: 'Upload no more than 12 images.' }, { status: 400 });

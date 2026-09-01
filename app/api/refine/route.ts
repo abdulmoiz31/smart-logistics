@@ -1,12 +1,13 @@
 import { getCaptureBase64, getItem, updateItem } from '@/lib/db';
 import { refineItem } from '@/lib/gemini';
 import { resolveCubicFeet } from '@/lib/catalogue';
+import { isUuid } from '@/lib/validation';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json() as Record<string, unknown>;
-    if (typeof body.itemId !== 'string') {
-      return Response.json({ error: 'itemId is required.' }, { status: 400 });
+    if (!isUuid(body.itemId)) {
+      return Response.json({ error: 'A valid itemId is required.' }, { status: 400 });
     }
     const item = await getItem(body.itemId);
     if (!item) return Response.json({ error: 'Item not found.' }, { status: 404 });

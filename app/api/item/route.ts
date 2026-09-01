@@ -1,14 +1,15 @@
 import { createItem } from '@/lib/db';
 import { getEntry, resolveCubicFeet } from '@/lib/catalogue';
 import type { SizeClass } from '@/lib/types';
+import { isUuid } from '@/lib/validation';
 
 const sizeClasses: SizeClass[] = ['s', 'm', 'l'];
 
 export async function POST(request: Request) {
   try {
     const body = await request.json() as Record<string, unknown>;
-    if (typeof body.roomId !== 'string' || typeof body.category !== 'string' || !sizeClasses.includes(body.sizeClass as SizeClass)) {
-      return Response.json({ error: 'roomId, category, and a valid sizeClass are required.' }, { status: 400 });
+    if (!isUuid(body.roomId) || typeof body.category !== 'string' || !sizeClasses.includes(body.sizeClass as SizeClass)) {
+      return Response.json({ error: 'A valid roomId, category, and sizeClass are required.' }, { status: 400 });
     }
     const entry = getEntry(body.category);
     const item = await createItem(body.roomId, {

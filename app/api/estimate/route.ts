@@ -2,14 +2,15 @@ import { getSessionRooms, saveQuote, setSessionEmail } from '@/lib/db';
 import { priceQuote } from '@/lib/pricing';
 import rateCard from '@/data/ratecard.json';
 import type { AccessFlag, RateCard } from '@/lib/types';
+import { isUuid } from '@/lib/validation';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function POST(request: Request) {
   try {
     const body = await request.json() as Record<string, unknown>;
-    if (typeof body.sessionId !== 'string') {
-      return Response.json({ error: 'sessionId is required.' }, { status: 400 });
+    if (!isUuid(body.sessionId)) {
+      return Response.json({ error: 'A valid sessionId is required.' }, { status: 400 });
     }
     if (body.email !== undefined && (typeof body.email !== 'string' || !emailPattern.test(body.email))) {
       return Response.json({ error: 'Enter a valid email address.' }, { status: 400 });

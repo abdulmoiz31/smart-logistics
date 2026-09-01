@@ -1,5 +1,6 @@
 import { createRoom } from '@/lib/db';
 import type { RoomType } from '@/lib/types';
+import { isUuid } from '@/lib/validation';
 
 const roomTypes: RoomType[] = [
   'living_room', 'bedroom', 'kitchen', 'dining_room', 'bathroom',
@@ -9,8 +10,8 @@ const roomTypes: RoomType[] = [
 export async function POST(request: Request) {
   try {
     const body = await request.json() as Record<string, unknown>;
-    if (typeof body.sessionId !== 'string') {
-      return Response.json({ error: 'sessionId is required.' }, { status: 400 });
+    if (!isUuid(body.sessionId)) {
+      return Response.json({ error: 'A valid sessionId is required.' }, { status: 400 });
     }
     const roomType = roomTypes.includes(body.roomType as RoomType)
       ? body.roomType as RoomType

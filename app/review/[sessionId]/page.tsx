@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ItemRow } from '@/components/ItemRow';
 import { SimilarItemPicker } from '@/components/SimilarItemPicker';
+import { formatLabel } from '@/lib/format';
 import type { Item, Room, SessionDetails } from '@/lib/types';
 
 export default function ReviewPage() {
@@ -151,7 +152,7 @@ export default function ReviewPage() {
   }
 
   if (loading) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-slate-600">Loading your inventory…</main>;
-  if (!session) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6"><p className="font-semibold text-rose-700">{error || 'This scan could not be found.'}</p></main>;
+  if (!session) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6"><div className="max-w-sm text-center"><p className="font-semibold text-rose-700">{error || 'This scan could not be found.'}</p><Link href="/" className="mt-4 inline-block font-bold text-cyan-700">Start a new scan</Link></div></main>;
   if (!entries.length) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6"><div className="max-w-sm text-center"><h1 className="text-2xl font-black text-slate-950">Add some items first</h1><p className="mt-2 text-slate-600">We need an inventory before we can create an estimate.</p><Link href={`/scan/${sessionId}`} className="mt-5 inline-block rounded-xl bg-cyan-700 px-4 py-3 font-bold text-white">Return to scan</Link></div></main>;
 
   return (
@@ -159,10 +160,21 @@ export default function ReviewPage() {
       <div className="mx-auto max-w-3xl">
         <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-slate-950">Move<span className="text-cyan-700">Scan</span></Link><Link href={`/scan/${sessionId}`} className="text-sm font-bold text-cyan-700">Add another room</Link></header>
         <h1 className="mt-8 text-3xl font-black tracking-tight text-slate-950">Check your inventory</h1>
-        <p className="mt-2 text-slate-600">We&apos;ve surfaced anything uncertain first. Tap through changes — the estimate updates after review.</p>
+        <p className="mt-2 text-slate-600">{uncertain.length ? 'We’ve surfaced anything uncertain first. Tap through changes — the estimate updates after review.' : 'Review the items below, then get your estimate.'}</p>
         {error && <p role="alert" className="mt-4 rounded-xl bg-rose-50 p-3 text-sm font-semibold text-rose-800">{error}</p>}
-        {uncertain.length > 0 && <section className="mt-7"><h2 className="text-lg font-black text-slate-950">We weren&apos;t sure about these</h2><p className="mt-1 text-sm text-slate-600">A quick check helps keep your estimate honest.</p><div className="mt-3 space-y-3">{uncertain.map(({ item }) => <div key={item.id} className="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-slate-900">{item.name}</p><p className="mt-1 text-sm text-slate-600">{Math.round(item.confidence * 100)}% confidence</p></div><button type="button" disabled={busyItemId === item.id} onClick={() => void refine(item)} className="min-h-11 rounded-xl bg-amber-500 px-3 text-sm font-bold text-slate-950 disabled:opacity-50">{busyItemId === item.id ? 'Checking…' : 'Check this'}</button></div></div>)}</div></section>}
-        <details className="mt-8"><summary className="cursor-pointer text-lg font-black text-slate-950">Looks good</summary><div className="mt-3 space-y-6">{session.rooms.map((room) => { const goodItems = room.items.filter((item) => !uncertainIds.has(item.id)); if (!goodItems.length) return null; return <div key={room.id}><div className="mb-2 flex items-center justify-between"><h3 className="font-bold capitalize text-slate-800">{room.roomType.replace('_', ' ')}</h3><button type="button" onClick={() => setPickerRoom(room)} className="min-h-11 text-sm font-bold text-cyan-700">Add item</button></div><div className="space-y-3">{goodItems.map((item) => <ItemRow key={item.id} item={item} busy={busyItemId === item.id} onChange={(patch) => void updateItem(item, patch)} onRemove={() => void deleteItem(item)} />)}</div></div>; })}</div></details>
+        {uncertain.length > 0 && <section className="mt-7"><h2 className="text-lg font-black text-slate-950">We weren’t sure about these</h2><p className="mt-1 text-sm text-slate-600">A quick check helps keep your estimate honest.</p><div className="mt-3 space-y-3">{uncertain.map(({ item }) => <div key={item.id} className="rounded-2xl border border-amber-200 bg-amber-50 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-slate-900">{formatLabel(item.name)}</p><p className="mt-1 text-sm text-slate-600">{Math.round(item.confidence * 100)}% confidence</p></div><button type="button" disabled={busyItemId === item.id} onClick={() => void refine(item)} className="min-h-11 rounded-xl bg-amber-500 px-3 text-sm font-bold text-slate-950 disabled:opacity-50">{busyItemId === item.id ? 'Checking…' : 'Check this'}</button></div></div>)}</div></section>}
+        <section className="mt-8 space-y-5">{session.rooms.map((room) => {
+          const confirmedItems = room.items.filter((item) => !uncertainIds.has(item.id));
+          const roomCubicFeet = confirmedItems.reduce((total, item) => total + item.cubicFeet * item.count, 0);
+          const roomLabel = formatLabel(room.roomType);
+          const addButton = <button type="button" onClick={() => setPickerRoom(room)} className="min-h-11 text-sm font-bold text-cyan-700">Add item</button>;
+
+          if (!confirmedItems.length) {
+            return <div key={room.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="flex items-center justify-between gap-3"><div><h2 className="font-bold text-slate-900">{roomLabel}</h2><p className="mt-1 text-sm text-slate-600">All items for this room are shown above for review.</p></div>{addButton}</div></div>;
+          }
+
+          return <details key={room.id} open={session.rooms.length === 1} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><summary className="cursor-pointer font-black text-slate-950">{roomLabel} · {confirmedItems.length} confirmed item{confirmedItems.length === 1 ? '' : 's'} · {Math.round(roomCubicFeet * 10) / 10} cu ft</summary><div className="mt-4"><div className="mb-2 flex justify-end">{addButton}</div><div className="space-y-3">{confirmedItems.map((item) => <ItemRow key={item.id} item={item} busy={busyItemId === item.id} onChange={(patch) => void updateItem(item, patch)} onRemove={() => void deleteItem(item)} />)}</div></div></details>;
+        })}</section>
         {pickerRoom && <div className="mt-6"><SimilarItemPicker roomType={pickerRoom.roomType} onPick={addItem} onCancel={() => setPickerRoom(undefined)} /></div>}
         <footer className="sticky bottom-0 mt-8 border-t border-slate-200 bg-slate-50/95 py-4 backdrop-blur"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold text-slate-500">Total volume</p><p className="text-xl font-black text-slate-950">{Math.round(totalCubicFeet * 10) / 10} cu ft</p></div><button type="button" onClick={() => void getEstimate()} disabled={creatingEstimate} className="min-h-12 rounded-2xl bg-cyan-700 px-5 font-bold text-white disabled:opacity-60">{creatingEstimate ? 'Calculating…' : 'Get my estimate'}</button></div></footer>
       </div>

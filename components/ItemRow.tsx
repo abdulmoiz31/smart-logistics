@@ -1,5 +1,6 @@
 'use client';
 
+import { formatLabel } from '@/lib/format';
 import type { Item } from '@/lib/types';
 import { SizeChips } from './SizeChips';
 import { Stepper } from './Stepper';
@@ -16,7 +17,7 @@ export function ItemRow({ item, onChange, onRemove, busy = false }: ItemRowProps
     <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-semibold text-slate-900">{item.name}</h3>
+          <h3 className="font-semibold text-slate-900">{formatLabel(item.name)}</h3>
           <p className="mt-0.5 text-sm text-slate-500">{item.cubicFeet} cu ft each</p>
         </div>
         <button

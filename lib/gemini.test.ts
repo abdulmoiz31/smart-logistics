@@ -48,6 +48,29 @@ describe('error classification', () => {
 });
 
 describe('cascade', () => {
+  it('passes an abort signal to Gemini requests', async () => {
+    vi.stubEnv('MOVESCAN_DEMO_MODE', '0');
+    vi.stubEnv('GEMINI_API_KEY', 'test-key');
+
+    let signal: AbortSignal | undefined;
+    vi.doMock('@google/genai', () => ({
+      GoogleGenAI: class {
+        models = {
+          generateContent: async ({ config }: { config: { abortSignal?: AbortSignal } }) => {
+            signal = config.abortSignal;
+            return { text: JSON.stringify({ roomType: 'bedroom', items: [] }) };
+          },
+        };
+      },
+    }));
+
+    const { analyzeRoom } = await import('./gemini');
+    await analyzeRoom([{ base64: 'x', mimeType: 'image/jpeg' }], 'bedroom');
+
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal?.aborted).toBe(false);
+  });
+
   it('escalates to the fallback model on a quota error and reports degraded', async () => {
     vi.stubEnv('MOVESCAN_DEMO_MODE', '0');
     vi.stubEnv('GEMINI_API_KEY', 'test-key');

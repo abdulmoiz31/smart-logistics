@@ -44,19 +44,19 @@ describe('totalCubicFeet', () => {
 
 describe('computeTolerance', () => {
   it('uses the confidence floor for a confident inventory', () => {
-    expect(computeTolerance([item(), item()])).toBeCloseTo(0.08);
+    expect(computeTolerance([item(), item()])).toBe(0.08);
   });
 
   it('widens for uncertain and manually added items', () => {
     expect(computeTolerance([
       item({ confidence: 0.4 }),
       item({ source: 'user_added' }),
-    ])).toBeCloseTo(0.11);
+    ])).toBe(0.11);
   });
 
   it('caps a highly uncertain inventory', () => {
     const uncertain = Array.from({ length: 40 }, () => item({ confidence: 0.1 }));
-    expect(computeTolerance(uncertain)).toBeCloseTo(0.3);
+    expect(computeTolerance(uncertain)).toBe(0.3);
   });
 });
 
