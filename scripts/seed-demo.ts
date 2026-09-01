@@ -1,6 +1,7 @@
 import livingRoom from '../lib/fixtures/living_room.json';
 import bedroom from '../lib/fixtures/bedroom.json';
 import { resolveCubicFeet } from '../lib/catalogue';
+import { parseRoomAnalysis } from '../lib/schema';
 import {
   createRoom,
   createSession,
@@ -21,13 +22,16 @@ async function seed() {
   await setAccessFlags(livingRoomId, ['stairs']);
   await setAccessFlags(bedroomId, []);
 
-  await replaceItems(livingRoomId, livingRoom.items.map((item) => ({
+  const livingRoomItems = parseRoomAnalysis(livingRoom).items;
+  const bedroomItems = parseRoomAnalysis(bedroom).items;
+
+  await replaceItems(livingRoomId, livingRoomItems.map((item) => ({
     ...item,
     cubicFeet: resolveCubicFeet(item.category, item.sizeClass),
     source: 'ai' as const,
     editedByUser: false,
   })));
-  await replaceItems(bedroomId, bedroom.items.map((item) => ({
+  await replaceItems(bedroomId, bedroomItems.map((item) => ({
     ...item,
     cubicFeet: resolveCubicFeet(item.category, item.sizeClass),
     source: 'ai' as const,
