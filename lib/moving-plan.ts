@@ -102,3 +102,18 @@ export function describeVolume(totalCubicFeet: number): VolumeContext | null {
     typicalHigh: band.high,
   };
 }
+
+/**
+ * Packing units read as counts, so a quantity of one must not say "1 boxes".
+ * Mass and length units ("lbs", "ft") are already invariant.
+ */
+const UNIT_SINGULAR: Record<string, string> = {
+  boxes: 'box',
+  rolls: 'roll',
+  bags: 'bag',
+};
+
+export function formatQuantity(quantity: number, unit: string): string {
+  const resolved = quantity === 1 ? (UNIT_SINGULAR[unit] ?? unit) : unit;
+  return `${quantity} ${resolved}`;
+}

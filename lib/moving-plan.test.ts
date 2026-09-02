@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planTruckAndCrew, planPackingMaterials, describeVolume } from './moving-plan';
+import { formatQuantity, planTruckAndCrew, planPackingMaterials, describeVolume } from './moving-plan';
 import type { Item } from './types';
 
 function item(over: Partial<Item> = {}): Item {
@@ -112,5 +112,26 @@ describe('describeVolume', () => {
 
   it('handles a volume below every band', () => {
     expect(describeVolume(50)?.comparison).toContain('studio');
+  });
+});
+
+describe('formatQuantity', () => {
+  it('uses the singular unit for exactly one', () => {
+    expect(formatQuantity(1, 'boxes')).toBe('1 box');
+    expect(formatQuantity(1, 'bags')).toBe('1 bag');
+    expect(formatQuantity(1, 'rolls')).toBe('1 roll');
+  });
+
+  it('keeps the plural unit above one', () => {
+    expect(formatQuantity(4, 'boxes')).toBe('4 boxes');
+  });
+
+  it('leaves mass and length units unchanged at one', () => {
+    expect(formatQuantity(1, 'lbs')).toBe('1 lbs');
+    expect(formatQuantity(1, 'ft')).toBe('1 ft');
+  });
+
+  it('passes through an unknown unit untouched', () => {
+    expect(formatQuantity(1, 'crates')).toBe('1 crates');
   });
 });
