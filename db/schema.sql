@@ -69,9 +69,10 @@ create table scan_usage (
 
 create index scan_usage_date_idx on scan_usage (usage_date);
 
-create or replace function consume_quota(p_keys text[], p_limits integer[])
+create or replace function public.consume_quota(p_keys text[], p_limits integer[])
 returns text
 language plpgsql
+set search_path = ''
 as $$
 declare
   v_day   date := (now() at time zone 'utc')::date;
@@ -84,7 +85,7 @@ begin
 
   for i in 1 .. array_length(p_keys, 1) loop
     select count into v_count
-      from scan_usage
+      from public.scan_usage
       where bucket_key = p_keys[i] and usage_date = v_day
       for update;
     if coalesce(v_count, 0) >= p_limits[i] then
@@ -93,10 +94,10 @@ begin
   end loop;
 
   for i in 1 .. array_length(p_keys, 1) loop
-    insert into scan_usage (bucket_key, usage_date, count)
+    insert into public.scan_usage (bucket_key, usage_date, count)
       values (p_keys[i], v_day, 1)
       on conflict (bucket_key, usage_date)
-      do update set count = scan_usage.count + 1;
+      do update set count = public.scan_usage.count + 1;
   end loop;
 
   return null;

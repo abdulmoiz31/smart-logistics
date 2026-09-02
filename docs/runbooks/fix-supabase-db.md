@@ -6,6 +6,21 @@
 
 ---
 
+## ✅ RESOLVED 2026-09-03
+
+Migrations `0001_scan_usage`, `0004_session_ownership` and a follow-up
+`0005_consume_quota_search_path` were applied to project `pmszxadohfamwxtfrpjd`
+via the Supabase MCP server (a personal access token was provided, so the
+"agent cannot apply DDL" constraint below no longer held). `npm run check-db`
+now reports every line `OK`. The rest of this runbook is kept for history.
+
+Still outstanding (dashboard-only, cannot be done via the token — auth config
+returns 403):
+- Authentication → Providers → Email → **turn "Confirm email" OFF** (`mailer_autoconfirm`)
+- Authentication → Policies → **minimum password length → 8**
+
+---
+
 ## Read this first: what the agent cannot do
 
 **The agent cannot apply these changes.** All of them are DDL — `create table`,
