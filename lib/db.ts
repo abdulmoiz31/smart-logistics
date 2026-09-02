@@ -1,7 +1,9 @@
 import 'server-only';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import families from '../data/catalogue-families.json';
 import { getHandling } from './catalogue';
+import { bucketByDay } from './chart';
 import type {
   AccessFlag,
   ImageInput,
@@ -446,4 +448,79 @@ export async function getLeadsSummary(): Promise<LeadsSummary> {
   const pendingCount = allQuotes.filter((q) => q.status === 'pending_review').length;
 
   return { totalScans, estimatedScans, confirmedScans, medianEstimateCents, totalCubicFeet, meanEditRate, pendingCount };
+}
+
+export interface TrendPoint {
+  date: string;
+  scans: number;
+  confirmed: number;
+}
+
+export async function getLeadsTrend(days = 14): Promise<TrendPoint[]> {
+  const client = db();
+  const end = new Date();
+  end.setUTCHours(23, 59, 59, 999);
+  const start = new Date(end);
+  start.setUTCDate(start.getUTCDate() - (days - 1));
+  start.setUTCHours(0, 0, 0, 0);
+
+  const dayList: string[] = [];
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    dayList.push(d.toISOString().slice(0, 10));
+  }
+
+  const { data: sessions, error: sessionError } = await client
+    .from('sessions')
+    .select('created_at')
+    .gte('created_at', start.toISOString())
+    .lte('created_at', end.toISOString());
+  if (sessionError) throw new Error(`getLeadsTrend sessions failed: ${sessionError.message}`);
+
+  const { data: quotes, error: quoteError } = await client
+    .from('quotes')
+    .select('created_at')
+    .eq('status', 'confirmed')
+    .gte('created_at', start.toISOString())
+    .lte('created_at', end.toISOString());
+  if (quoteError) throw new Error(`getLeadsTrend quotes failed: ${quoteError.message}`);
+
+  const scanCounts = bucketByDay(
+    ((sessions ?? []) as Row[]).map((row) => String(row.created_at)),
+    dayList,
+  );
+  const confirmedCounts = bucketByDay(
+    ((quotes ?? []) as Row[]).map((row) => String(row.created_at)),
+    dayList,
+  );
+
+  return dayList.map((date) => ({ date, scans: scanCounts[date], confirmed: confirmedCounts[date] }));
+}
+
+export interface CompositionSlice {
+  label: string;
+  cubicFeet: number;
+}
+
+export async function getVolumeComposition(): Promise<CompositionSlice[]> {
+  const client = db();
+  const { data, error } = await client.from('items').select('category, cubic_feet, count');
+  if (error) throw new Error(`getVolumeComposition failed: ${error.message}`);
+
+  const familyMap = new Map<string, string>();
+  for (const [family, categories] of Object.entries(families)) {
+    for (const category of categories) {
+      familyMap.set(category, family);
+    }
+  }
+
+  const totals = new Map<string, number>();
+  const order = Object.keys(families);
+  for (const row of (data ?? []) as Row[]) {
+    const family = familyMap.get(String(row.category)) ?? 'Other';
+    totals.set(family, (totals.get(family) ?? 0) + asNumber(row.cubic_feet) * asNumber(row.count));
+  }
+
+  return order
+    .map((label) => ({ label, cubicFeet: Math.round((totals.get(label) ?? 0) * 10) / 10 }))
+    .filter((slice) => slice.cubicFeet > 0);
 }

@@ -121,6 +121,19 @@ npm run seed-demo
 
 The seed requires configured Supabase credentials. It creates two rooms from the checked-in fixtures and a pending quote.
 
+## Demo data
+
+Two seed scripts are available:
+
+```bash
+npm run seed-demo          # single session from fixtures, for end-to-end checks
+npm run seed-demo-data     # larger deterministic demo set for charts and queue
+npm run seed-demo-data -- --reset                 # remove previous demo rows first
+npm run seed-demo-data -- --sessions 60 --days 21 # tune volume and window
+```
+
+`seed-demo-data` writes sessions with `customer_email` ending in `@seed.movescan.test`. The `--reset` flag deletes **only** rows with that marker, so real customer data is never touched. It is safe to run repeatedly against a development project.
+
 ## Verification
 
 ```bash
@@ -129,7 +142,7 @@ npm test
 npm run build
 ```
 
-Before a live demo, run one complete production scan within two minutes of presenting to warm the hosting, database, and model connections. Then complete the customer-to-agent journey three times on the demo phone and venue network. Test forced fallback mode once with an invalid Gemini key, and ensure the agent queue is populated with `npm run seed-demo`.
+Before a live demo, run one complete production scan within two minutes of presenting to warm the hosting, database, and model connections. Then complete the customer-to-agent journey three times on the demo phone and venue network. Test forced fallback mode once with an invalid Gemini key, and ensure the agent queue is populated with `npm run seed-demo-data`.
 
 ## Deployment
 

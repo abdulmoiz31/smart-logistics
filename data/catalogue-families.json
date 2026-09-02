@@ -1,0 +1,70 @@
+{
+  "Furniture": [
+    "sofa_2seat",
+    "sofa_3seat",
+    "sofa_sectional",
+    "sleeper_sofa",
+    "armchair",
+    "recliner",
+    "ottoman",
+    "coffee_table",
+    "side_table",
+    "console_table",
+    "dining_table",
+    "dining_chair",
+    "bar_stool",
+    "china_cabinet",
+    "bed_frame",
+    "mattress",
+    "nightstand",
+    "dresser",
+    "wardrobe",
+    "vanity",
+    "crib",
+    "changing_table",
+    "desk",
+    "office_chair",
+    "filing_cabinet",
+    "bookcase",
+    "tv",
+    "tv_stand",
+    "floor_lamp",
+    "table_lamp",
+    "rug",
+    "mirror",
+    "artwork",
+    "kitchen_island",
+    "piano_upright",
+    "piano_grand",
+    "storage_shelf"
+  ],
+  "Appliances": [
+    "fridge",
+    "freezer",
+    "oven",
+    "dishwasher",
+    "microwave",
+    "washer",
+    "dryer"
+  ],
+  "Boxes": [
+    "box_small",
+    "box_medium",
+    "box_large",
+    "wardrobe_box"
+  ],
+  "Fitness & outdoor": [
+    "treadmill",
+    "exercise_bike",
+    "elliptical",
+    "bicycle",
+    "patio_table",
+    "patio_chair",
+    "grill",
+    "lawn_mower",
+    "tool_chest"
+  ],
+  "Other": [
+    "unknown_item"
+  ]
+}

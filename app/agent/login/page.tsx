@@ -31,31 +31,31 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={signIn} className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#111827] p-7 shadow-2xl">
-      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-teal-300">Meridian Dispatch</p>
-      <h1 className="mt-3 text-2xl font-bold tracking-tight text-white">Sign in to the console</h1>
-      <p className="mt-2 text-sm text-slate-400">Shared access for moving specialists.</p>
+    <form onSubmit={signIn} className="w-full max-w-sm rounded-2xl border border-c-border bg-c-panel p-7 shadow-2xl">
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-c-accent">Meridian Dispatch</p>
+      <h1 className="mt-3 text-2xl font-bold tracking-tight text-c-ink">Sign in to the console</h1>
+      <p className="mt-2 text-sm text-c-ink-2">Shared access for moving specialists.</p>
 
-      <label className="mt-7 block font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">
+      <label className="mt-7 block font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-c-ink-2">
         Shared password
         <input
           type="password"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
-          className="mt-2 min-h-11 w-full rounded-lg border border-white/15 bg-[#080C16] px-3 font-mono text-base text-white placeholder:text-slate-600 focus:border-teal-400 focus:outline-none"
+          className="mt-2 min-h-11 w-full rounded-lg border border-c-border bg-c-panel-2 px-3 font-mono text-base text-c-ink placeholder:text-c-ink-3 focus:border-c-accent focus:outline-none"
           autoFocus
         />
       </label>
 
       {error && (
-        <p role="alert" className="mt-3 rounded-lg border border-rose-400/30 bg-rose-400/10 p-2.5 text-sm font-semibold text-rose-200">
+        <p role="alert" className="mt-3 rounded-lg border border-c-overdue/30 bg-c-overdue/10 p-2.5 text-sm font-semibold text-c-overdue">
           {error}
         </p>
       )}
 
       <button
         disabled={loading}
-        className="mt-6 min-h-11 w-full rounded-lg bg-teal-400 font-bold text-[#080C16] transition hover:bg-teal-300 disabled:opacity-60"
+        className="mt-6 min-h-11 w-full rounded-lg bg-c-accent font-bold text-c-accent-ink transition hover:bg-c-accent/90 disabled:opacity-60"
       >
         {loading ? 'Signing in…' : 'Open console'}
       </button>
@@ -64,5 +64,5 @@ function LoginForm() {
 }
 
 export default function AgentLoginPage() {
-  return <main className="grid min-h-dvh place-items-center bg-[#080C16] p-5"><Suspense><LoginForm /></Suspense></main>;
+  return <main className="grid min-h-dvh place-items-center bg-c-bg p-5"><Suspense><LoginForm /></Suspense></main>;
 }

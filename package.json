@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "seed-demo": "tsx scripts/seed-demo.ts"
+    "seed-demo": "tsx scripts/seed-demo.ts",
+    "seed-demo-data": "tsx scripts/seed-demo-data.ts"
   },
   "dependencies": {
     "@google/genai": "^2.19.0",
@@ -27,6 +28,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.5.24",
+    "playwright": "^1.62.1",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
     "typescript": "^5",

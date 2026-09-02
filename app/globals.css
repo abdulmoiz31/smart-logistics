@@ -3,6 +3,73 @@
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+
+  /* Console surfaces — light */
+  --c-bg:        #f1f5f9;
+  --c-panel:     #ffffff;
+  --c-panel-2:   #f8fafc;
+  --c-border:    #e2e8f0;
+  --c-border-hi: #cbd5e1;
+  --c-ink:       #0f172a;
+  --c-ink-2:     #475569;
+  --c-ink-3:     #64748b;
+  --c-accent:    #0f766e;
+  --c-accent-ink:#ffffff;
+
+  /* State — urgency rails and status */
+  --c-fresh:     #0f766e;
+  --c-waiting:   #b45309;
+  --c-overdue:   #be123c;
+
+  /* Chart surface + categorical slots (validated) */
+  --viz-surface: #ffffff;
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-grid: #e2e8f0;
+}
+
+:root[data-theme='dark'] {
+  --c-bg:        #080c16;
+  --c-panel:     #111827;
+  --c-panel-2:   #0f1626;
+  --c-border:    rgb(255 255 255 / 0.10);
+  --c-border-hi: rgb(255 255 255 / 0.25);
+  --c-ink:       #e8edf7;
+  --c-ink-2:     #94a3b8;
+  --c-ink-3:     #64748b;
+  --c-accent:    #2dd4bf;
+  --c-accent-ink:#080c16;
+
+  --c-fresh:     #2dd4bf;
+  --c-waiting:   #fbbf24;
+  --c-overdue:   #fb7185;
+
+  --viz-surface: #0f1626;
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-grid: rgb(255 255 255 / 0.10);
+}
+
+@theme inline {
+  --color-c-bg: var(--c-bg);
+  --color-c-panel: var(--c-panel);
+  --color-c-panel-2: var(--c-panel-2);
+  --color-c-border: var(--c-border);
+  --color-c-border-hi: var(--c-border-hi);
+  --color-c-ink: var(--c-ink);
+  --color-c-ink-2: var(--c-ink-2);
+  --color-c-ink-3: var(--c-ink-3);
+  --color-c-accent: var(--c-accent);
+  --color-c-accent-ink: var(--c-accent-ink);
+  --color-c-fresh: var(--c-fresh);
+  --color-c-waiting: var(--c-waiting);
+  --color-c-overdue: var(--c-overdue);
 }
 
 * {
