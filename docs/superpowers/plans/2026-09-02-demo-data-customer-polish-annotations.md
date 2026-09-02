@@ -26,12 +26,22 @@ npx tsc --noEmit && npx vitest run && npx next build --turbopack
 ```
 Expected: clean typecheck, 93 tests passing, successful build.
 
-- [ ] **Step 2: Review the two stray untracked entries**
+- [ ] **Step 2: Handle the two stray untracked entries — read this before committing**
 
-`scripts/verify-themes.ts` and `tmp/` are untracked. Decide deliberately: if
-`verify-themes.ts` is a real verification tool, commit it; if it was scratch, delete it.
-`tmp/` should almost certainly be deleted and added to `.gitignore` — a committed `tmp/`
-is how build junk enters a repo.
+`scripts/verify-themes.ts` is a genuinely useful Playwright harness that logs into the
+console and screenshots both themes, and `tmp/` is its output directory.
+
+**It contained the live `AGENT_CONSOLE_SECRET` as a hardcoded literal.** That has been
+fixed — it now reads `process.env.AGENT_CONSOLE_SECRET` and throws with usage
+instructions when unset. Verify that before committing: `grep "const SECRET = '"` must
+return nothing. It was never committed, so nothing leaked, but committing it unchanged
+would have published the console password.
+
+`tmp/` is now in `.gitignore`. Do not commit screenshot output.
+
+Note that `playwright` is **not** in `package.json`, so the script only runs where it is
+installed separately. Either add it as a devDependency or note the prerequisite in the
+script header — do not leave a committed script that fails on a clean checkout.
 
 - [ ] **Step 3: Commit in coherent chunks and push**
 

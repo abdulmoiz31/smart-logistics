@@ -54,9 +54,9 @@ export default function AgentQueuePage() {
   return (
     <ConsoleShell title="Quote queue" active="queue">
       {loading || !now ? (
-        <p className="py-16 text-center font-mono text-sm text-slate-500">Loading queue…</p>
+        <p className="py-16 text-center font-mono text-sm text-c-ink-3">Loading queue…</p>
       ) : error ? (
-        <p role="alert" className="rounded-xl border border-rose-400/30 bg-rose-400/10 p-4 text-sm font-semibold text-rose-200">
+        <p role="alert" className="rounded-xl border border-c-overdue/30 bg-c-overdue/10 p-4 text-sm font-semibold text-c-overdue">
           {error}
         </p>
       ) : (

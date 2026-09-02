@@ -45,3 +45,6 @@ next-env.d.ts
 .qoder/
 .vscode/
 .idea/
+
+# Local verification screenshot output
+tmp/
