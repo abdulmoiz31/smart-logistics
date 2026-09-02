@@ -1,12 +1,12 @@
 -- Per-identity daily counter for AI-call rate limiting.
-create table scan_usage (
+create table if not exists scan_usage (
   bucket_key text not null,
   usage_date date not null,
   count      integer not null default 0,
   primary key (bucket_key, usage_date)
 );
 
-create index scan_usage_date_idx on scan_usage (usage_date);
+create index if not exists scan_usage_date_idx on scan_usage (usage_date);
 
 -- Atomic "can this identity spend one unit?" check.
 -- p_keys / p_limits are parallel arrays. Returns the first key that is at or over
