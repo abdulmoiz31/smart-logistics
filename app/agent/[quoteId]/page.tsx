@@ -7,6 +7,7 @@ import { ItemRow } from '@/components/ItemRow';
 import { AuditTrail } from '@/components/AuditTrail';
 import { ConsoleShell } from '@/components/agent/console';
 import { Lightbox } from '@/components/agent/Lightbox';
+import type { AnnotationBox } from '@/components/agent/PhotoAnnotations';
 import { formatCents, priceQuote } from '@/lib/pricing';
 import rateCard from '@/data/ratecard.json';
 import type { AccessFlag, Item, Quote, RateCard, Room } from '@/lib/types';
@@ -23,7 +24,7 @@ export default function AgentQuotePage() {
   const [busyItemId, setBusyItemId] = useState('');
   const [confirming, setConfirming] = useState(false);
   const [error, setError] = useState('');
-  const [lightbox, setLightbox] = useState<{ roomId: string; urls: string[]; index: number; label: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ roomId: string; urls: string[]; index: number; label: string; boxesByImage: Record<number, AnnotationBox[]> } | null>(null);
 
   const loadQuote = useCallback(async (): Promise<{ quote: Quote; rooms: AgentRoom[] }> => {
     const response = await fetch(`/api/agent/quote/${quoteId}`);
@@ -113,20 +114,38 @@ export default function AgentQuotePage() {
     }
   }
 
+  function boxesForRoom(room: AgentRoom): Record<number, AnnotationBox[]> {
+    const byImage: Record<number, AnnotationBox[]> = {};
+    for (const item of room.items) {
+      if (!item.box) continue;
+      const list = byImage[item.box.image] ?? [];
+      list.push({ label: item.name, x: item.box.x, y: item.box.y, w: item.box.w, h: item.box.h });
+      byImage[item.box.image] = list;
+    }
+    return byImage;
+  }
+
   async function refreshCaptureUrls(): Promise<string[]> {
     const data = await loadQuote();
     setRooms(data.rooms);
     if (lightbox) {
       const currentRoom = data.rooms.find((room) => room.id === lightbox.roomId);
       const newUrls = currentRoom?.captureUrls ?? lightbox.urls;
-      setLightbox({ ...lightbox, urls: newUrls });
+      const newBoxes = currentRoom ? boxesForRoom(currentRoom) : lightbox.boxesByImage;
+      setLightbox({ ...lightbox, urls: newUrls, boxesByImage: newBoxes });
       return newUrls;
     }
     return [];
   }
 
   function openLightbox(room: AgentRoom, index: number) {
-    setLightbox({ roomId: room.id, urls: room.captureUrls, index, label: `${formatRoomType(room.roomType)} photos` });
+    setLightbox({
+      roomId: room.id,
+      urls: room.captureUrls,
+      index,
+      label: `${formatRoomType(room.roomType)} photos`,
+      boxesByImage: boxesForRoom(room),
+    });
   }
 
   if (loading) {
@@ -157,6 +176,7 @@ export default function AgentQuotePage() {
           onNavigate={(index) => setLightbox({ ...lightbox, index })}
           label={lightbox.label}
           onRefreshUrls={refreshCaptureUrls}
+          boxesByImage={lightbox.boxesByImage}
         />
       )}
 

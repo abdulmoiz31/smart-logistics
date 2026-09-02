@@ -1,5 +1,5 @@
 import { CATEGORY_IDS } from './catalogue';
-import type { DetectedItem, RoomAnalysis, RoomType, SizeClass } from './types';
+import type { BoundingBox, DetectedItem, RoomAnalysis, RoomType, SizeClass } from './types';
 
 export class SchemaError extends Error {}
 
@@ -33,6 +33,16 @@ export const ROOM_ANALYSIS_SCHEMA = {
           ambiguousBetween: { type: 'array', items: { type: 'string' } },
           uncertaintyReason: { type: 'string' },
           seenInImages: { type: 'array', items: { type: 'integer' } },
+          box: {
+            type: 'object',
+            properties: {
+              image: { type: 'integer' },
+              x: { type: 'number' },
+              y: { type: 'number' },
+              w: { type: 'number' },
+              h: { type: 'number' },
+            },
+          },
         },
         required: ['name', 'category', 'count', 'sizeClass', 'confidence'],
       },
@@ -84,6 +94,8 @@ function parseItem(raw: unknown, imageCount: number): DetectedItem | null {
       )
     : undefined;
 
+  const box = parseBox(value.box, imageCount);
+
   return {
     name: value.name.trim(),
     category,
@@ -93,7 +105,33 @@ function parseItem(raw: unknown, imageCount: number): DetectedItem | null {
     ...(ambiguousBetween?.length ? { ambiguousBetween } : {}),
     ...(uncertaintyReason ? { uncertaintyReason } : {}),
     ...(seenInImages?.length ? { seenInImages } : {}),
+    ...(box ? { box } : {}),
   };
+}
+
+function parseBox(raw: unknown, imageCount: number): BoundingBox | undefined {
+  if (typeof raw !== 'object' || raw === null) return undefined;
+  const value = raw as Record<string, unknown>;
+
+  const image = typeof value.image === 'number' && Number.isInteger(value.image)
+    ? value.image
+    : NaN;
+  const x = typeof value.x === 'number' && Number.isFinite(value.x) ? value.x : NaN;
+  const y = typeof value.y === 'number' && Number.isFinite(value.y) ? value.y : NaN;
+  const w = typeof value.w === 'number' && Number.isFinite(value.w) ? value.w : NaN;
+  const h = typeof value.h === 'number' && Number.isFinite(value.h) ? value.h : NaN;
+
+  if (
+    image < 1 || image > imageCount
+    || x < 0 || x >= 1 || y < 0 || y >= 1
+    || w <= 0 || w > 1 || h <= 0 || h > 1
+    || x + w > 1.001 || y + h > 1.001
+    || w < 0.02 || h < 0.02
+  ) {
+    return undefined;
+  }
+
+  return { image, x, y, w, h };
 }
 
 export function parseRoomAnalysis(raw: unknown, imageCount = 12): RoomAnalysis {

@@ -63,6 +63,7 @@ function rowToItem(row: Row): Item {
     ...(Array.isArray(row.seen_in_images) && row.seen_in_images.length
       ? { seenInImages: row.seen_in_images.map(asNumber) }
       : {}),
+    ...(row.box && typeof row.box === 'object' ? { box: row.box as Item['box'] } : {}),
   };
 }
 
@@ -182,6 +183,7 @@ export async function replaceItems(roomId: string, items: ItemInput[]): Promise<
     ambiguous_between: item.ambiguousBetween ?? null,
     uncertainty_reason: item.uncertaintyReason ?? null,
     seen_in_images: item.seenInImages ?? null,
+    box: item.box ?? null,
   }));
   const { data, error } = await client.from('items').insert(rows).select();
   if (error) throw new Error(`replaceItems insert failed: ${error.message}`);

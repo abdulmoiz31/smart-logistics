@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { PhotoAnnotations, type AnnotationBox } from './PhotoAnnotations';
 
 interface LightboxProps {
   urls: string[];
@@ -9,16 +10,19 @@ interface LightboxProps {
   onNavigate: (i: number) => void;
   label: string;
   onRefreshUrls?: () => Promise<string[]>;
+  boxesByImage?: Record<number, AnnotationBox[]>;
 }
 
-export function Lightbox({ urls, index, onClose, onNavigate, label, onRefreshUrls }: LightboxProps) {
+export function Lightbox({ urls, index, onClose, onNavigate, label, onRefreshUrls, boxesByImage }: LightboxProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const [refreshed, setRefreshed] = useState(false);
   const [refreshError, setRefreshError] = useState(false);
+  const [showDetections, setShowDetections] = useState(true);
   const reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const currentUrl = urls[index];
+  const currentBoxes = showDetections ? (boxesByImage?.[index + 1] ?? []) : [];
 
   const goPrev = useCallback(() => {
     onNavigate(index > 0 ? index - 1 : urls.length - 1);
@@ -88,6 +92,7 @@ export function Lightbox({ urls, index, onClose, onNavigate, label, onRefreshUrl
   }
 
   const transitionClass = reducedMotion ? '' : 'transition-opacity duration-200';
+  const hasBoxes = Object.values(boxesByImage ?? {}).some((boxes) => boxes.length > 0);
 
   return (
     <div
@@ -101,14 +106,26 @@ export function Lightbox({ urls, index, onClose, onNavigate, label, onRefreshUrl
       }}
     >
       <div className="relative flex max-h-[90vh] max-w-[90vw] flex-col items-center">
-        <button
-          ref={closeRef}
-          type="button"
-          onClick={onClose}
-          className="absolute -top-10 right-0 rounded-lg px-2 py-1 text-sm font-bold text-white/90 hover:text-white focus:outline focus:outline-2 focus:outline-white"
-        >
-          Close
-        </button>
+        <div className="absolute -top-10 right-0 flex items-center gap-3">
+          {hasBoxes && (
+            <button
+              type="button"
+              onClick={() => setShowDetections((current) => !current)}
+              aria-pressed={showDetections}
+              className="rounded-lg bg-white/10 px-3 py-1 text-sm font-bold text-white/90 hover:bg-white/20 hover:text-white focus:outline focus:outline-2 focus:outline-white"
+            >
+              {showDetections ? 'Hide detections' : 'Show detections'}
+            </button>
+          )}
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            className="rounded-lg px-3 py-1 text-sm font-bold text-white/90 hover:text-white focus:outline focus:outline-2 focus:outline-white"
+          >
+            Close
+          </button>
+        </div>
 
         {refreshError ? (
           <div className="rounded-xl bg-white/10 p-6 text-center text-white">
@@ -116,12 +133,15 @@ export function Lightbox({ urls, index, onClose, onNavigate, label, onRefreshUrl
             <p className="mt-1 text-sm text-white/80">Reload the page to refresh the images.</p>
           </div>
         ) : (
-          <img
-            src={currentUrl}
-            alt={`Photo ${index + 1} of ${urls.length}`}
-            className="max-h-[90vh] max-w-[90vw] object-contain"
-            onError={handleImageError}
-          />
+          <div className="relative">
+            <img
+              src={currentUrl}
+              alt={`Photo ${index + 1} of ${urls.length}`}
+              className="max-h-[90vh] max-w-[90vw] object-contain"
+              onError={handleImageError}
+            />
+            <PhotoAnnotations boxes={currentBoxes} />
+          </div>
         )}
 
         <p className="mt-3 text-sm font-medium text-white/90">

@@ -98,6 +98,54 @@ describe('parseRoomAnalysis', () => {
     }, 5);
     expect(analysis.items[0].seenInImages).toBeUndefined();
   });
+
+  it('preserves a valid box', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, box: { image: 2, x: 0.1, y: 0.2, w: 0.3, h: 0.4 } }],
+    }, 5);
+    expect(analysis.items[0].box).toEqual({ image: 2, x: 0.1, y: 0.2, w: 0.3, h: 0.4 });
+  });
+
+  it('drops a box with an out-of-range image index', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, box: { image: 6, x: 0.1, y: 0.2, w: 0.3, h: 0.4 } }],
+    }, 5);
+    expect(analysis.items[0].box).toBeUndefined();
+  });
+
+  it('drops a box with negative coordinates', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, box: { image: 1, x: -0.1, y: 0.2, w: 0.3, h: 0.4 } }],
+    }, 5);
+    expect(analysis.items[0].box).toBeUndefined();
+  });
+
+  it('drops a box that extends past the image edge', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, box: { image: 1, x: 0.8, y: 0.2, w: 0.3, h: 0.4 } }],
+    }, 5);
+    expect(analysis.items[0].box).toBeUndefined();
+  });
+
+  it('drops a sub-2% box', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, box: { image: 1, x: 0.1, y: 0.2, w: 0.01, h: 0.4 } }],
+    }, 5);
+    expect(analysis.items[0].box).toBeUndefined();
+  });
+
+  it('drops a non-object box', () => {
+    const analysis = parseRoomAnalysis({
+      roomType: 'living_room',
+      items: [{ name: 'sofa', category: 'sofa_3seat', count: 1, sizeClass: 'm', confidence: 0.9, box: 'whole image' }],
+    }, 5);
+    expect(analysis.items[0].box).toBeUndefined();
+  });
 });
 
 describe('parseRefinement', () => {

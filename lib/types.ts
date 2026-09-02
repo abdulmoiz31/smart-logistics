@@ -20,6 +20,14 @@ export type RoomType =
 export type SessionStatus = 'scanning' | 'reviewing' | 'pending_review' | 'confirmed';
 export type QuoteStatus = 'draft' | 'pending_review' | 'confirmed';
 
+export interface BoundingBox {
+  image: number;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
 export interface Item {
   id: string;
   roomId: string;
@@ -34,6 +42,7 @@ export interface Item {
   ambiguousBetween?: string[];
   uncertaintyReason?: string;
   seenInImages?: number[];
+  box?: BoundingBox;
 }
 
 export interface DetectedItem {
@@ -45,6 +54,7 @@ export interface DetectedItem {
   ambiguousBetween?: string[];
   uncertaintyReason?: string;
   seenInImages?: number[];
+  box?: BoundingBox;
 }
 
 export interface RoomAnalysis {

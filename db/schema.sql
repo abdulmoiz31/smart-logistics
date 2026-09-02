@@ -37,6 +37,7 @@ create table items (
   ambiguous_between text[],
   uncertainty_reason text,
   seen_in_images integer[],
+  box jsonb,
   created_at timestamptz not null default now()
 );
 

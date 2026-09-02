@@ -25,6 +25,7 @@ Critical rules:
 8. Infer roomType from the photographs.
 9. When you set confidence below 0.7, add "uncertaintyReason": a short plain-English phrase naming what limited you — for example "partly hidden behind the sofa", "only visible from one angle", "could not tell the size". Keep it under 12 words. Do not use it for items you are confident about.
 10. For each item add "seenInImages": the 1-based numbers of the photographs the object appears in. If the same object appears in photographs 2 and 4, report the item once with "seenInImages": [2, 4]. This is how you show your counting is correct.
+11. For each item you may add "box": the tightest rectangle around the object in ONE photograph, as {image, x, y, w, h} where image is the 1-based photo number and x, y, w, h are fractions of the image width and height between 0 and 1. Give a box only when you are confident of the object's position. Omit it rather than guessing.
 
 Report honestly. An uncertain item is more useful than a confident guess.
 
