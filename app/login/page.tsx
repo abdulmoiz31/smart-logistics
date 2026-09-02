@@ -68,7 +68,7 @@ function LoginForm() {
     <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-3xl border border-u-border bg-u-panel p-6 shadow-2xl">
       <p className="text-sm font-bold uppercase tracking-[0.16em] text-c-accent">MoveScan</p>
       <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Sign in</h1>
-      <p className="mt-2 text-sm text-u-ink-2">Welcome back. 15 scans a day.</p>
+      <p className="mt-2 text-sm text-u-ink-2">Welcome back</p>
       <label className="mt-6 block text-sm font-bold text-u-ink">
         Email
         <input

@@ -68,7 +68,7 @@ function SignupForm() {
     <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-3xl border border-u-border bg-u-panel p-6 shadow-2xl">
       <p className="text-sm font-bold uppercase tracking-[0.16em] text-c-accent">MoveScan</p>
       <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Create your account</h1>
-      <p className="mt-2 text-sm text-u-ink-2">Free. Takes a few seconds. 15 scans a day.</p>
+      <p className="mt-2 text-sm text-u-ink-2">Enjoy generous daily scan limits</p>
       <label className="mt-6 block text-sm font-bold text-u-ink">
         Email
         <input
