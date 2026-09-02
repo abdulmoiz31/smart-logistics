@@ -85,6 +85,12 @@ In the Supabase dashboard:
    | `0003_leads_summary_view.sql` | Aggregated Insights summary |
    | `0004_session_ownership.sql` | `sessions.user_id` / `sessions.device_id` — **required for authorization** |
 
+   Check what is actually applied at any time — this only reports, never changes anything:
+
+   ```bash
+   npm run check-db
+   ```
+
    **`0004` is not optional.** Without it every session operation fails, because
    `createSession` and the ownership lookups reference those columns. The error is made
    actionable in `lib/db.ts` — if you see "apply db/migrations/0004_session_ownership.sql",
@@ -184,6 +190,11 @@ the cookie is a session cookie so it also dies when the browser closes. `POST
 /api/agent/logout` clears it. A hard refresh cannot be detected server-side — it is
 indistinguishable from any other navigation — so "expire on refresh" is not achievable; the
 idle window is the closest equivalent.
+
+**Rate limiting fails open.** `consumeQuota` returns `{ ok: true }` when the
+`consume_quota` RPC errors, so a database blip never blocks a customer mid-scan. The
+consequence is that a *missing* migration silently disables limiting entirely rather than
+failing loudly — run `npm run check-db` to confirm the RPC exists.
 
 **`RATE_LIMIT_IP_SALT` is required**, not optional. `lib/rate-limit.ts` throws when it is
 unset or shorter than 16 characters. Without a secret salt, hashed IPv4 buckets are
