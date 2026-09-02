@@ -218,57 +218,57 @@ export default function ScanPage() {
     setPickerOpen(false);
   }
 
-  if (loading) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-slate-600">Preparing your scan...</main>;
-  if (error && !room) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6"><div className="max-w-sm text-center"><p className="font-semibold text-rose-700">{error}</p><Link href="/" className="mt-4 inline-block font-bold text-cyan-700">Start again</Link></div></main>;
+  if (loading) return <main className="grid min-h-screen place-items-center bg-u-bg p-6 text-u-ink-2">Preparing your scan...</main>;
+  if (error && !room) return <main className="grid min-h-screen place-items-center bg-u-bg p-6"><div className="max-w-sm text-center"><p className="font-semibold text-c-overdue">{error}</p><Link href="/" className="mt-4 inline-block font-bold text-c-accent">Start again</Link></div></main>;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6">
+    <main className="min-h-screen bg-u-bg px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-2xl">
-        <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-slate-950">Move<span className="text-cyan-700">Scan</span></Link><span className="text-sm font-semibold text-slate-500">Room-by-room scan</span></header>
-        {demoMode && !degraded && <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Demo mode -- using sample inventory results.</p>}
-        {degraded && !demoMode && <p className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-900">Using our backup model -- results may be less precise.</p>}
-        {degraded && demoMode && <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-900">We couldn&apos;t reach our AI just now -- showing sample results. <button type="button" onClick={() => { setError(''); }} className="font-bold underline">Try again</button></p>}
-        <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
-          <p className="text-sm font-bold uppercase tracking-[0.14em] text-cyan-700">Room {items.length ? 'ready' : '1'}</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Show us this room.</h1>
-          <p className="mt-2 text-slate-600">Take a few wide photos from different angles. We&apos;ll avoid counting the same thing twice.</p>
-          <label className="mt-6 block text-sm font-semibold text-slate-800">What kind of room is this?
-            <select value={roomType} onChange={(event) => setRoomType(event.target.value as RoomType)} className="mt-2 min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-slate-900">
+        <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-u-ink">Move<span className="text-c-accent">Scan</span></Link><span className="text-sm font-semibold text-u-ink-3">Room-by-room scan</span></header>
+        {demoMode && !degraded && <p className="mt-5 rounded-xl border border-c-waiting/20 bg-c-waiting/10 p-3 text-sm font-semibold text-c-waiting">Demo mode -- using sample inventory results.</p>}
+        {degraded && !demoMode && <p className="mt-5 rounded-xl border border-c-accent/20 bg-c-accent/10 p-3 text-sm font-semibold text-c-accent">Using our backup model -- results may be less precise.</p>}
+        {degraded && demoMode && <p className="mt-5 rounded-xl border border-c-overdue/20 bg-c-overdue/10 p-3 text-sm font-semibold text-c-overdue">We couldn&apos;t reach our AI just now -- showing sample results. <button type="button" onClick={() => { setError(''); }} className="font-bold underline">Try again</button></p>}
+        <section className="mt-6 rounded-3xl border border-u-border bg-u-panel p-5 shadow-sm sm:p-7">
+          <p className="text-sm font-bold uppercase tracking-[0.14em] text-c-accent">Room {items.length ? 'ready' : '1'}</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Show us this room.</h1>
+          <p className="mt-2 text-u-ink-2">Take a few wide photos from different angles. We&apos;ll avoid counting the same thing twice.</p>
+          <label className="mt-6 block text-sm font-semibold text-u-ink">What kind of room is this?
+            <select value={roomType} onChange={(event) => setRoomType(event.target.value as RoomType)} className="mt-2 min-h-11 w-full rounded-xl border border-u-border bg-u-bg px-3 text-u-ink">
               {roomTypes.map((entry, index) => <option key={`${entry.value}-${index}`} value={entry.value}>{entry.label}</option>)}
             </select>
           </label>
           <div className="mt-6"><AccessFlags value={accessFlags} onChange={setAccessFlags} /></div>
-          <label className="mt-6 grid min-h-32 cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-cyan-300 bg-cyan-50 p-4 text-center transition hover:bg-cyan-100">
-            <span><strong className="block text-slate-900">Add photos</strong><span className="mt-1 block text-sm text-slate-600">Up to 12 photos · choose from your camera or photo library</span></span>
+          <label className="mt-6 grid min-h-32 cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-c-accent/30 bg-c-accent/10 p-4 text-center transition hover:bg-c-accent/15">
+            <span><strong className="block text-u-ink">Add photos</strong><span className="mt-1 block text-sm text-u-ink-2">Up to 12 photos · choose from your camera or photo library</span></span>
             <input type="file" accept="image/*" multiple onChange={addPhotos} className="sr-only" />
           </label>
-          {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-950 text-sm text-white" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
-          {error && <p role="alert" className="mt-4 text-sm font-medium text-rose-700">{error}</p>}
+          {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-u-ink text-sm text-u-panel" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
+          {error && <p role="alert" className="mt-4 text-sm font-medium text-c-overdue">{error}</p>}
           {quotaBlock && (
-            <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 p-5">
+            <div className="mt-4 rounded-2xl border border-c-waiting/20 bg-c-waiting/10 p-5">
               {quotaBlock.authenticated ? (
                 <div>
-                  <p className="font-black text-amber-950">Daily limit reached (15 scans)</p>
-                  <p className="mt-1 text-sm text-amber-900">Your allowance resets tomorrow.</p>
+                  <p className="font-black text-c-waiting">Daily limit reached (15 scans)</p>
+                  <p className="mt-1 text-sm text-u-ink-2">Your allowance resets tomorrow.</p>
                 </div>
               ) : (
                 <div>
-                  <p className="font-black text-amber-950">You&apos;ve used your 3 free scans today.</p>
-                  <p className="mt-1 text-sm text-amber-900">Create a free account to scan 15 rooms a day. It takes a few seconds.</p>
+                  <p className="font-black text-c-waiting">You&apos;ve used your 3 free scans today.</p>
+                  <p className="mt-1 text-sm text-u-ink-2">Create a free account to scan 15 rooms a day. It takes a few seconds.</p>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <Link href={`/signup?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-amber-600 px-4 font-bold text-white">Create free account</Link>
-                    <Link href={`/login?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center font-semibold text-amber-900">Already have an account? Sign in</Link>
+                    <Link href={`/signup?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-waiting px-4 font-bold text-white">Create free account</Link>
+                    <Link href={`/login?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center font-semibold text-c-waiting">Already have an account? Sign in</Link>
                   </div>
                 </div>
               )}
             </div>
           )}
-          <button type="button" disabled={!photos.length || analysing || Boolean(quotaBlock)} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-cyan-700 px-5 font-bold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300">
+          <button type="button" disabled={!photos.length || analysing || Boolean(quotaBlock)} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-c-accent px-5 font-bold text-c-accent-ink transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-u-border disabled:text-u-ink-3">
             {analysing ? analysisStages[analysisStage] : 'Analyse this room'}
           </button>
         </section>
-        {items.length > 0 && <section className="mt-5 rounded-3xl border border-emerald-200 bg-emerald-50 p-5"><h2 className="font-bold text-emerald-950">We found {items.length} item{items.length === 1 ? '' : 's'}.</h2><p className="mt-1 text-sm text-emerald-900">You&apos;ll be able to check every item before your estimate.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => void createRoom()} className="min-h-11 rounded-xl border border-emerald-300 bg-white font-semibold text-emerald-900">Add another room</button><Link href={`/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-emerald-700 font-semibold text-white">Review my inventory</Link></div></section>}
-        {items.length === 0 && !analysing && <section className="mt-5"><button type="button" onClick={() => setPickerOpen(true)} className="min-h-11 font-semibold text-cyan-700">Did we miss something? Add it yourself</button>{pickerOpen && <div className="mt-3"><SimilarItemPicker roomType={roomType} onPick={addItem} onCancel={() => setPickerOpen(false)} /></div>}</section>}
+        {items.length > 0 && <section className="mt-5 rounded-3xl border border-c-fresh/20 bg-c-fresh/10 p-5"><h2 className="font-bold text-c-fresh">We found <span className="font-mono tabular-nums">{items.length}</span> item{items.length === 1 ? '' : 's'}.</h2><p className="mt-1 text-sm text-u-ink-2">You&apos;ll be able to check every item before your estimate.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => void createRoom()} className="min-h-11 rounded-xl border border-c-fresh/30 bg-u-panel font-semibold text-c-fresh">Add another room</button><Link href={`/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-fresh font-semibold text-c-accent-ink">Review my inventory</Link></div></section>}
+        {items.length === 0 && !analysing && <section className="mt-5"><button type="button" onClick={() => setPickerOpen(true)} className="min-h-11 font-semibold text-c-accent">Did we miss something? Add it yourself</button>{pickerOpen && <div className="mt-3"><SimilarItemPicker roomType={roomType} onPick={addItem} onCancel={() => setPickerOpen(false)} /></div>}</section>}
       </div>
     </main>
   );

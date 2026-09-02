@@ -4,6 +4,14 @@
   --background: #f8fafc;
   --foreground: #0f172a;
 
+  /* Customer surfaces — light only, no dark variant by design */
+  --u-bg:      #fbfcfd;
+  --u-panel:   #ffffff;
+  --u-border:  #e6ebf1;
+  --u-ink:     #10151f;
+  --u-ink-2:   #4a5568;
+  --u-ink-3:   #6b7688;
+
   /* Console surfaces — light */
   --c-bg:        #f1f5f9;
   --c-panel:     #ffffff;
@@ -57,6 +65,12 @@
 }
 
 @theme inline {
+  --color-u-bg: var(--u-bg);
+  --color-u-panel: var(--u-panel);
+  --color-u-border: var(--u-border);
+  --color-u-ink: var(--u-ink);
+  --color-u-ink-2: var(--u-ink-2);
+  --color-u-ink-3: var(--u-ink-3);
   --color-c-bg: var(--c-bg);
   --color-c-panel: var(--c-panel);
   --color-c-panel-2: var(--c-panel-2);

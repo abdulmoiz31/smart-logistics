@@ -68,7 +68,7 @@ export default function AgentQueuePage() {
             formatCents={formatCents}
           />
 
-          <div className="mt-8 space-y-2">
+          <div data-agent-queue className="mt-8 space-y-2">
             {ordered.length === 0 ? (
               <EmptyState title="Queue clear">
                 Nothing is waiting on a specialist. New scans appear here the moment a

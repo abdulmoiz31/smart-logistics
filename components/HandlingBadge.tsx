@@ -8,10 +8,10 @@ const labels: Record<HandlingFlag, string> = {
 };
 
 const styles: Record<HandlingFlag, string> = {
-  fragile: 'bg-amber-50 text-amber-800 border-amber-200',
-  heavy: 'bg-slate-100 text-slate-700 border-slate-300',
-  high_value: 'bg-violet-50 text-violet-800 border-violet-200',
-  disassembly: 'bg-sky-50 text-sky-800 border-sky-200',
+  fragile: 'bg-c-waiting/10 text-c-waiting border-c-waiting/20',
+  heavy: 'bg-u-bg text-u-ink-2 border-u-border',
+  high_value: 'bg-c-overdue/10 text-c-overdue border-c-overdue/20',
+  disassembly: 'bg-c-accent/10 text-c-accent border-c-accent/20',
 };
 
 export function HandlingBadge({ flag }: { flag: HandlingFlag }) {

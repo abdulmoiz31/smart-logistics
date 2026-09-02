@@ -65,57 +65,57 @@ function SignupForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
-      <p className="text-sm font-bold uppercase tracking-[0.16em] text-cyan-700">MoveScan</p>
-      <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Create your account</h1>
-      <p className="mt-2 text-sm text-slate-600">Enjoy generous daily scan limits</p>
-      <label className="mt-6 block text-sm font-bold text-slate-800">
+    <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-3xl border border-u-border bg-u-panel p-6 shadow-2xl">
+      <p className="text-sm font-bold uppercase tracking-[0.16em] text-c-accent">MoveScan</p>
+      <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Create your account</h1>
+      <p className="mt-2 text-sm text-u-ink-2">Free. Takes a few seconds. 15 scans a day.</p>
+      <label className="mt-6 block text-sm font-bold text-u-ink">
         Email
         <input
           type="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 px-3"
+          className="mt-2 min-h-11 w-full rounded-xl border border-u-border bg-u-bg px-3 text-u-ink"
           autoComplete="email"
           autoFocus
           required
         />
       </label>
-      <label className="mt-4 block text-sm font-bold text-slate-800">
+      <label className="mt-4 block text-sm font-bold text-u-ink">
         Password
         <span className="relative mt-2 block">
           <input
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="min-h-11 w-full rounded-xl border border-slate-300 px-3 pr-10"
+            className="min-h-11 w-full rounded-xl border border-u-border bg-u-bg px-3 pr-10 text-u-ink"
             autoComplete="new-password"
             minLength={8}
             required
           />
           <button
             type="button"
-            onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+            onClick={() => setShowPassword((value) => !value)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-u-ink-3 hover:text-u-ink-2"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
           >
             <EyeIcon open={showPassword} />
           </button>
         </span>
-        <span className="mt-1 block text-xs font-normal text-slate-500">At least 8 characters.</span>
+        <span className="mt-1 block text-xs font-normal text-u-ink-3">At least 8 characters.</span>
       </label>
-      {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-700">{error}</p>}
-      <button disabled={loading} className="mt-5 min-h-11 w-full rounded-xl bg-cyan-700 font-bold text-white disabled:opacity-60">
+      {error && <p role="alert" className="mt-3 text-sm font-semibold text-c-overdue">{error}</p>}
+      <button disabled={loading} className="mt-5 min-h-11 w-full rounded-xl bg-c-accent font-bold text-c-accent-ink disabled:opacity-60">
         {loading ? 'Creating account…' : 'Create account'}
       </button>
-      <p className="mt-4 text-center text-sm text-slate-600">
+      <p className="mt-4 text-center text-sm text-u-ink-2">
         Already have an account?{' '}
-        <Link href={`/login${searchParams.get('next') ? `?next=${encodeURIComponent(searchParams.get('next')!)}` : ''}`} className="font-bold text-cyan-700">
+        <Link href={`/login${searchParams.get('next') ? `?next=${encodeURIComponent(searchParams.get('next')!)}` : ''}`} className="font-bold text-c-accent">
           Sign in
         </Link>
       </p>
       <p className="mt-3 text-center text-sm">
-        <Link href={(() => { const n = searchParams.get('next'); return n && n.startsWith('/') && !n.startsWith('//') ? n : '/'; })()} className="text-slate-500 underline hover:text-slate-700">
+        <Link href={(() => { const next = searchParams.get('next'); return next && next.startsWith('/') && !next.startsWith('//') ? next : '/'; })()} className="text-u-ink-3 underline hover:text-u-ink-2">
           Continue without an account
         </Link>
       </p>
@@ -125,7 +125,7 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <main className="grid min-h-screen place-items-center bg-slate-50 p-5">
+    <main className="grid min-h-screen place-items-center bg-u-bg p-5">
       <Suspense>
         <SignupForm />
       </Suspense>

@@ -13,6 +13,8 @@ export async function middleware(request: NextRequest) {
   await refreshSession(request, response);
 
   const { pathname } = request.nextUrl;
+  response.headers.set('x-pathname', pathname);
+
   if (pathname.startsWith(AGENT_PREFIX) && pathname !== '/agent/login') {
     const expectedSecret = process.env.AGENT_CONSOLE_SECRET;
     if (!expectedSecret || request.cookies.get('agent_secret')?.value !== expectedSecret) {

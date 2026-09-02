@@ -36,18 +36,18 @@
     display: block !important;
   }
 
-  .bg-cyan-700,
-  .bg-emerald-700 {
+  .bg-c-accent,
+  .bg-c-fresh {
     background: white !important;
     color: black !important;
   }
 
-  .bg-cyan-700 *,
-  .bg-emerald-700 * {
+  .bg-c-accent *,
+  .bg-c-fresh * {
     color: black !important;
   }
 
-  .bg-slate-50 {
+  .bg-u-bg {
     background: white !important;
   }
 

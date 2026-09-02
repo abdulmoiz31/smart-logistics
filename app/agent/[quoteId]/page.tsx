@@ -208,7 +208,7 @@ export default function AgentQuotePage() {
               <div className="mt-5 space-y-3">
                 {room.items.map((item) => (
                   <div key={item.id}>
-                    <ItemRow item={item} busy={busyItemId === item.id || isConfirmed} onChange={(patch) => void updateItem(item, patch)} onRemove={() => undefined} />
+                    <ItemRow item={item} busy={busyItemId === item.id || isConfirmed} onChange={(patch) => void updateItem(item, patch)} onRemove={() => undefined} variant="agent" />
                     <AuditTrail item={item} />
                   </div>
                 ))}

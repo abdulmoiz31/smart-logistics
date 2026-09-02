@@ -20,23 +20,26 @@ export function AccessFlags({ value, onChange }: AccessFlagsProps) {
 
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-semibold text-slate-800">Getting to this room</legend>
-      {options.map((option) => (
-        <button
-          type="button"
-          key={option.flag}
-          onClick={() => toggle(option.flag)}
-          aria-pressed={value.includes(option.flag)}
-          className={`flex min-h-11 w-full items-center justify-between rounded-xl border px-3 text-left text-sm font-medium transition ${
-            value.includes(option.flag)
-              ? 'border-cyan-600 bg-cyan-50 text-cyan-900'
-              : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-          }`}
-        >
-          {option.label}
-          <span className="text-lg" aria-hidden="true">{value.includes(option.flag) ? '✓' : '+'}</span>
-        </button>
-      ))}
+      <legend className="text-sm font-semibold text-u-ink">Getting to this room</legend>
+      {options.map((option) => {
+        const selected = value.includes(option.flag);
+        return (
+          <button
+            type="button"
+            key={option.flag}
+            onClick={() => toggle(option.flag)}
+            aria-pressed={selected}
+            className={`flex min-h-11 w-full items-center justify-between rounded-xl border px-3 text-left text-sm font-medium transition ${
+              selected
+                ? 'border-c-accent bg-c-accent/10 text-c-accent'
+                : 'border-u-border bg-u-panel text-u-ink-2 hover:border-u-border/80'
+            }`}
+          >
+            {option.label}
+            <span className="text-lg" aria-hidden="true">{selected ? '✓' : '+'}</span>
+          </button>
+        );
+      })}
     </fieldset>
   );
 }
