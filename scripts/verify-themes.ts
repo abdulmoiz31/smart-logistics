@@ -25,7 +25,7 @@ async function setTheme(page: Page, theme: 'light' | 'dark') {
 
 async function login(page: Page) {
   await page.goto(`${BASE_URL}/agent/login`);
-  await page.fill('input[type="password"]', SECRET);
+  await page.fill('input[type="password"]', SECRET!);
   await page.click('button:has-text("Open console")');
   await page.waitForURL((url) => url.pathname.startsWith('/agent') && url.pathname !== '/agent/login');
 }
