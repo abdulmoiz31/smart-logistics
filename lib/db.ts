@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { getHandling } from './catalogue';
 import type {
   AccessFlag,
   ImageInput,
@@ -352,10 +353,22 @@ export async function listPendingQuotes(): Promise<QuoteSummary[]> {
   const quotes = ((data ?? []) as Row[]).map(rowToQuote);
   return Promise.all(quotes.map(async (quote) => {
     const rooms = await getSessionRooms(quote.sessionId);
+    const items = rooms.flatMap((room) => room.items);
+
+    const { data: sessionRow } = await client
+      .from('sessions')
+      .select('customer_email')
+      .eq('id', quote.sessionId)
+      .maybeSingle();
+    const email = (sessionRow as Row | null)?.customer_email;
+
     return {
       ...quote,
       roomCount: rooms.length,
-      itemCount: rooms.reduce((count, room) => count + room.items.length, 0),
+      itemCount: items.length,
+      totalCubicFeet: Math.round(items.reduce((sum, i) => sum + i.cubicFeet * i.count, 0) * 10) / 10,
+      handling: [...new Set(items.flatMap((i) => getHandling(i.category)))],
+      ...(typeof email === 'string' && email ? { customerEmail: email } : {}),
     };
   }));
 }

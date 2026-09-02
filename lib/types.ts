@@ -107,6 +107,12 @@ export interface Quote {
 export interface QuoteSummary extends Quote {
   roomCount: number;
   itemCount: number;
+  /** Derived from rooms already loaded — costs no extra query. */
+  totalCubicFeet: number;
+  /** Dispatch signals: what about this job changes the truck or the crew. */
+  handling: HandlingFlag[];
+  /** Who to call. A dispatch queue without contact details is unusable. */
+  customerEmail?: string;
 }
 
 export interface SessionDetails {
