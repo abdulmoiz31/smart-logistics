@@ -76,7 +76,19 @@ In the Supabase dashboard:
 
 1. **Authentication → Providers → Email**: enable, turn **"Confirm email" OFF**.
 2. **Authentication → Providers → Email**: set minimum password length to **8**.
-3. Run `db/migrations/0001_scan_usage.sql` in the Supabase SQL editor to create the rate-limiting table and function.
+3. Run every file in `db/migrations/` in the Supabase SQL editor, in order:
+
+   | Migration | What it adds |
+   |---|---|
+   | `0001_scan_usage.sql` | Rate-limiting table and the `consume_quota` function |
+   | `0002_item_box.sql` | `items.box` for photo annotations |
+   | `0003_leads_summary_view.sql` | Aggregated Insights summary |
+   | `0004_session_ownership.sql` | `sessions.user_id` / `sessions.device_id` — **required for authorization** |
+
+   **`0004` is not optional.** Without it every session operation fails, because
+   `createSession` and the ownership lookups reference those columns. The error is made
+   actionable in `lib/db.ts` — if you see "apply db/migrations/0004_session_ownership.sql",
+   this step was skipped.
 
 No redirect URL configuration is needed (password flow, not magic link).
 
@@ -145,6 +157,47 @@ npm run build
 ```
 
 Before a live demo, run one complete production scan within two minutes of presenting to warm the hosting, database, and model connections. Then complete the customer-to-agent journey three times on the demo phone and venue network. Test forced fallback mode once with an invalid Gemini key, and ensure the agent queue is populated with `npm run seed-demo-data`.
+
+## Security decisions on record
+
+Recorded deliberately so they can be reviewed rather than rediscovered.
+
+**Session ownership.** Scans are owned by `sessions.user_id` when created signed in, and
+otherwise by `sessions.device_id` (the `msid` cookie). Nine customer API routes call
+`assertSessionAccess` before doing any work. Ownership failure and "does not exist" both
+answer **404** — a 403 would confirm the id is real.
+
+Sessions created *before* migration `0004` have neither owner and stay readable, so estimate
+links already sent to customers keep working. That is a temporary widening; it can be
+tightened once pre-migration rows have aged out.
+
+**`customerEmail` is withheld** from `GET /api/session/[sessionId]` unless the caller is the
+owning **account** — a shared device must not surface someone else's address.
+
+**Row Level Security is not the mechanism.** `lib/db.ts` uses `SUPABASE_SERVICE_KEY`, which
+bypasses RLS by design, and every app query goes through it. Adding RLS policies would have
+no effect on these routes. Authorization lives in the route handlers.
+
+**Agent console sessions** carry a signed HMAC token (`lib/agent-session.ts`), not the raw
+shared password. 30-minute idle window, 8-hour absolute ceiling, both enforced server-side;
+the cookie is a session cookie so it also dies when the browser closes. `POST
+/api/agent/logout` clears it. A hard refresh cannot be detected server-side — it is
+indistinguishable from any other navigation — so "expire on refresh" is not achievable; the
+idle window is the closest equivalent.
+
+**`RATE_LIMIT_IP_SALT` is required**, not optional. `lib/rate-limit.ts` throws when it is
+unset or shorter than 16 characters. Without a secret salt, hashed IPv4 buckets are
+reversible by brute force over a 4.3-billion-address space. Changing the salt resets that
+day's IP counters once.
+
+**Email confirmation is deliberately OFF** (see Supabase setup above) to keep signup a
+single mobile step. Consequence: a fresh account is cheap, and signing in raises the daily
+AI allowance from 3/device to 15/account. The signed-in per-IP cap of 40/day is therefore
+the real backstop — tune that number, not the per-account one.
+
+**Signup discloses whether an email is registered** (409 "already registered"). Kept
+deliberately for usable error messaging; the privacy-preserving alternative needs
+transactional email, which is out of scope. This is a known, accepted trade-off.
 
 ## Deployment
 

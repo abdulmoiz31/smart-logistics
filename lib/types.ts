@@ -128,7 +128,17 @@ export interface QuoteSummary extends Quote {
 export interface SessionDetails {
   id: string;
   customerEmail?: string;
+  /** Owning account, when the scan was started signed in. */
+  userId?: string;
+  /** Owning device — set for every browser-created session. */
+  deviceId?: string;
   status: SessionStatus;
   rooms: Room[];
   latestQuote?: Quote;
+}
+
+/** Just enough of a session to make an authorization decision. */
+export interface SessionOwner {
+  userId: string | null;
+  deviceId: string | null;
 }

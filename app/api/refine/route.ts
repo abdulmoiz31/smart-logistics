@@ -1,18 +1,26 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { getCaptureBase64, getItem, updateItem } from '@/lib/db';
+import { getCaptureBase64, getItem, updateItem, getSessionOwnerForItem} from '@/lib/db';
 import { refineItem } from '@/lib/gemini';
 import { resolveCubicFeet } from '@/lib/catalogue';
 import { consumeQuota, clientIp } from '@/lib/rate-limit';
 import { getUser } from '@/lib/supabase/server';
 import { DEVICE_COOKIE, resolveDeviceId, deviceCookieOptions } from '@/lib/device';
 import { isUuid } from '@/lib/validation';
+import { assertSessionAccess } from '@/lib/session-access';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json() as Record<string, unknown>;
     if (!isUuid(body.itemId)) {
       return NextResponse.json({ error: 'A valid itemId is required.' }, { status: 400 });
+    }
+    try {
+      // Authorize before doing any work: an unauthorized caller must not write
+      // files or burn someone else's quota. 404 not 403 — see lib/session-access.ts.
+      await assertSessionAccess(await getSessionOwnerForItem(body.itemId));
+    } catch {
+      return Response.json({ error: 'Item not found.' }, { status: 404 });
     }
     const item = await getItem(body.itemId);
     if (!item) return NextResponse.json({ error: 'Item not found.' }, { status: 404 });

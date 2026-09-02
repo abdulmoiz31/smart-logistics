@@ -16,6 +16,7 @@ import type {
   Room,
   RoomType,
   SessionDetails,
+  SessionOwner,
   SessionStatus,
   SizeClass,
 } from './types';
@@ -90,9 +91,31 @@ function rowToRoom(row: Row, items: Item[], capturePaths: string[]): Room {
   };
 }
 
-export async function createSession(): Promise<string> {
-  const { data, error } = await db().from('sessions').insert({}).select('id').single();
-  if (error) throw new Error(`createSession failed: ${error.message}`);
+/**
+ * Owner is optional and defaulted so the seed scripts, which have no request
+ * context, keep working and produce deliberately unowned sessions.
+ */
+/**
+ * Ownership columns arrive via db/migrations/0004_session_ownership.sql. If that has
+ * not been applied, PostgREST reports a missing column and every session operation
+ * fails with an opaque 500. Turn that into an actionable message instead.
+ */
+function ownershipMigrationHint(message: string): string {
+  if (/device_id|user_id/.test(message) && /column|schema cache/i.test(message)) {
+    return `${message} — apply db/migrations/0004_session_ownership.sql in the Supabase SQL editor.`;
+  }
+  return message;
+}
+
+export async function createSession(
+  owner: { userId?: string | null; deviceId?: string | null } = {},
+): Promise<string> {
+  const row = {
+    ...(owner.userId ? { user_id: owner.userId } : {}),
+    ...(owner.deviceId ? { device_id: owner.deviceId } : {}),
+  };
+  const { data, error } = await db().from('sessions').insert(row).select('id').single();
+  if (error) throw new Error(`createSession failed: ${ownershipMigrationHint(error.message)}`);
   return String(required(data as Row | null, 'createSession').id);
 }
 
@@ -290,6 +313,8 @@ export async function getSession(sessionId: string): Promise<SessionDetails | nu
   return {
     id: String(row.id),
     ...(typeof row.customer_email === 'string' ? { customerEmail: row.customer_email } : {}),
+    ...(typeof row.user_id === 'string' ? { userId: row.user_id } : {}),
+    ...(typeof row.device_id === 'string' ? { deviceId: row.device_id } : {}),
     status: row.status as SessionStatus,
     rooms,
     ...(latestQuote ? { latestQuote } : {}),
@@ -499,4 +524,78 @@ export async function getVolumeComposition(): Promise<CompositionSlice[]> {
   return order
     .map((label) => ({ label, cubicFeet: Math.round((totals.get(label) ?? 0) * 10) / 10 }))
     .filter((slice) => slice.cubicFeet > 0);
+}
+
+/* ---------------------------------------------------------------------------
+ * Ownership lookups for authorization (lib/session-access.ts).
+ * Each selects only the two owner columns, so the guard never loads a session.
+ * ------------------------------------------------------------------------- */
+
+function rowToOwner(row: Row | null): SessionOwner | null {
+  if (!row) return null;
+  return {
+    userId: typeof row.user_id === 'string' ? row.user_id : null,
+    deviceId: typeof row.device_id === 'string' ? row.device_id : null,
+  };
+}
+
+export async function getSessionOwner(sessionId: string): Promise<SessionOwner | null> {
+  const { data, error } = await db()
+    .from('sessions')
+    .select('user_id, device_id')
+    .eq('id', sessionId)
+    .maybeSingle();
+  if (error) throw new Error(`getSessionOwner failed: ${ownershipMigrationHint(error.message)}`);
+  return rowToOwner(data as Row | null);
+}
+
+export async function getSessionOwnerForRoom(roomId: string): Promise<SessionOwner | null> {
+  const { data, error } = await db()
+    .from('rooms')
+    .select('sessions(user_id, device_id)')
+    .eq('id', roomId)
+    .maybeSingle();
+  if (error) throw new Error(`getSessionOwnerForRoom failed: ${ownershipMigrationHint(error.message)}`);
+  const joined = (data as Record<string, unknown> | null)?.sessions;
+  return rowToOwner((Array.isArray(joined) ? joined[0] : joined) as Row | null);
+}
+
+export async function getSessionOwnerForItem(itemId: string): Promise<SessionOwner | null> {
+  const { data, error } = await db()
+    .from('items')
+    .select('rooms(sessions(user_id, device_id))')
+    .eq('id', itemId)
+    .maybeSingle();
+  if (error) throw new Error(`getSessionOwnerForItem failed: ${ownershipMigrationHint(error.message)}`);
+  const room = (data as Record<string, unknown> | null)?.rooms;
+  const roomRow = (Array.isArray(room) ? room[0] : room) as Record<string, unknown> | null;
+  const joined = roomRow?.sessions;
+  return rowToOwner((Array.isArray(joined) ? joined[0] : joined) as Row | null);
+}
+
+export async function getSessionOwnerForQuote(quoteId: string): Promise<SessionOwner | null> {
+  const { data, error } = await db()
+    .from('quotes')
+    .select('sessions(user_id, device_id)')
+    .eq('id', quoteId)
+    .maybeSingle();
+  if (error) throw new Error(`getSessionOwnerForQuote failed: ${ownershipMigrationHint(error.message)}`);
+  const joined = (data as Record<string, unknown> | null)?.sessions;
+  return rowToOwner((Array.isArray(joined) ? joined[0] : joined) as Row | null);
+}
+
+/**
+ * Attach this device's unowned scans to the account that just signed in.
+ * Scoped to `user_id is null` — that predicate is the whole safety property.
+ * Without it, signing in on a shared device would take someone else's scans.
+ */
+export async function claimDeviceSessions(deviceId: string, userId: string): Promise<number> {
+  const { data, error } = await db()
+    .from('sessions')
+    .update({ user_id: userId })
+    .eq('device_id', deviceId)
+    .is('user_id', null)
+    .select('id');
+  if (error) throw new Error(`claimDeviceSessions failed: ${error.message}`);
+  return (data ?? []).length;
 }

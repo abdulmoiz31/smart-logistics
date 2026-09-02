@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { resolveRoomType } from './room-type';
-import { getCaptureBase64, replaceItems, saveCapture, updateRoomType } from '@/lib/db';
+import { getCaptureBase64, replaceItems, saveCapture, updateRoomType, getSessionOwnerForRoom} from '@/lib/db';
 import { analyzeRoom } from '@/lib/gemini';
 import { resolveCubicFeet } from '@/lib/catalogue';
 import { consumeQuota, clientIp } from '@/lib/rate-limit';
@@ -9,6 +9,7 @@ import { getUser } from '@/lib/supabase/server';
 import { DEVICE_COOKIE, resolveDeviceId, deviceCookieOptions } from '@/lib/device';
 import type { RoomType } from '@/lib/types';
 import { isUuid } from '@/lib/validation';
+import { assertSessionAccess } from '@/lib/session-access';
 
 const roomTypes: RoomType[] = [
   'living_room', 'bedroom', 'kitchen', 'dining_room', 'bathroom',
@@ -35,6 +36,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Each upload must be an image no larger than 1 MB.' }, { status: 400 });
     }
 
+    try {
+      // Authorize before doing any work: an unauthorized caller must not write
+      // files or burn someone else's quota. 404 not 403 — see lib/session-access.ts.
+      await assertSessionAccess(await getSessionOwnerForRoom(roomId));
+    } catch {
+      return Response.json({ error: 'Room not found.' }, { status: 404 });
+    }
     const cookieStore = await cookies();
     const device = resolveDeviceId(cookieStore.get(DEVICE_COOKIE)?.value);
     const user = await getUser();

@@ -1,4 +1,7 @@
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { claimDeviceSessions } from '@/lib/db';
+import { DEVICE_COOKIE } from '@/lib/device';
 import { supabaseServer } from '@/lib/supabase/server';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,13 +18,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Enter your password.' }, { status: 400 });
     }
     const supabase = await supabaseServer();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       return NextResponse.json({ error: 'Incorrect email or password.' }, { status: 401 });
     }
+    await claimScansForDevice(data.user?.id);
+
     return NextResponse.json({ ok: true });
   } catch (cause) {
     console.error('POST /api/auth/login failed', cause);
     return NextResponse.json({ error: 'Unable to sign in.' }, { status: 400 });
+  }
+}
+
+/**
+ * Attach any unowned scans from this device to the account that just authenticated.
+ * A failure here must never fail the sign-in — the user is authenticated either way,
+ * and losing a claim is recoverable while losing the session is not.
+ */
+async function claimScansForDevice(userId: string | undefined): Promise<void> {
+  if (!userId) return;
+  try {
+    const cookieStore = await cookies();
+    const deviceId = cookieStore.get(DEVICE_COOKIE)?.value;
+    if (!deviceId) return;
+    const claimed = await claimDeviceSessions(deviceId, userId);
+    if (claimed > 0) console.info(`[auth] claimed ${claimed} scan(s) for user ${userId}`);
+  } catch (cause) {
+    console.error('[auth] claiming device scans failed', cause);
   }
 }

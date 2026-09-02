@@ -1,7 +1,8 @@
-import { createItem } from '@/lib/db';
+import { createItem, getSessionOwnerForRoom} from '@/lib/db';
 import { getEntry, resolveCubicFeet } from '@/lib/catalogue';
 import type { SizeClass } from '@/lib/types';
 import { isUuid } from '@/lib/validation';
+import { assertSessionAccess } from '@/lib/session-access';
 
 const sizeClasses: SizeClass[] = ['s', 'm', 'l'];
 
@@ -10,6 +11,13 @@ export async function POST(request: Request) {
     const body = await request.json() as Record<string, unknown>;
     if (!isUuid(body.roomId) || typeof body.category !== 'string' || !sizeClasses.includes(body.sizeClass as SizeClass)) {
       return Response.json({ error: 'A valid roomId, category, and sizeClass are required.' }, { status: 400 });
+    }
+    try {
+      // Authorize before doing any work: an unauthorized caller must not write
+      // files or burn someone else's quota. 404 not 403 — see lib/session-access.ts.
+      await assertSessionAccess(await getSessionOwnerForRoom(body.roomId));
+    } catch {
+      return Response.json({ error: 'Room not found.' }, { status: 404 });
     }
     const entry = getEntry(body.category);
     const item = await createItem(body.roomId, {

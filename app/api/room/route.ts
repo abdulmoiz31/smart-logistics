@@ -1,6 +1,7 @@
-import { createRoom } from '@/lib/db';
+import { createRoom, getSessionOwner} from '@/lib/db';
 import type { RoomType } from '@/lib/types';
 import { isUuid } from '@/lib/validation';
+import { assertSessionAccess } from '@/lib/session-access';
 
 const roomTypes: RoomType[] = [
   'living_room', 'bedroom', 'kitchen', 'dining_room', 'bathroom',
@@ -12,6 +13,13 @@ export async function POST(request: Request) {
     const body = await request.json() as Record<string, unknown>;
     if (!isUuid(body.sessionId)) {
       return Response.json({ error: 'A valid sessionId is required.' }, { status: 400 });
+    }
+    try {
+      // Authorize before doing any work: an unauthorized caller must not write
+      // files or burn someone else's quota. 404 not 403 — see lib/session-access.ts.
+      await assertSessionAccess(await getSessionOwner(body.sessionId));
+    } catch {
+      return Response.json({ error: 'Session not found.' }, { status: 404 });
     }
     const roomType = roomTypes.includes(body.roomType as RoomType)
       ? body.roomType as RoomType

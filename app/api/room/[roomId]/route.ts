@@ -1,6 +1,7 @@
-import { setAccessFlags, updateRoomType } from '@/lib/db';
+import { setAccessFlags, updateRoomType, getSessionOwnerForRoom} from '@/lib/db';
 import type { AccessFlag, RoomType } from '@/lib/types';
 import { isUuid } from '@/lib/validation';
+import { assertSessionAccess } from '@/lib/session-access';
 
 const roomTypes: RoomType[] = [
   'living_room', 'bedroom', 'kitchen', 'dining_room', 'bathroom',
@@ -15,6 +16,13 @@ export async function PATCH(
   try {
     const { roomId } = await params;
     if (!isUuid(roomId)) return Response.json({ error: 'Invalid room ID.' }, { status: 400 });
+    try {
+      // Ownership failure and "does not exist" answer identically on purpose:
+      // a 403 would confirm the id is real.
+      await assertSessionAccess(await getSessionOwnerForRoom(roomId));
+    } catch {
+      return Response.json({ error: 'Room not found.' }, { status: 404 });
+    }
     const body = await request.json() as Record<string, unknown>;
     if (body.roomType !== undefined) {
       if (!roomTypes.includes(body.roomType as RoomType)) {
