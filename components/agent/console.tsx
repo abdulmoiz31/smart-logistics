@@ -170,7 +170,7 @@ export function TicketRow({
     >
       <span aria-hidden className={`w-1 shrink-0 ${URGENCY_RAIL[urgency]}`} />
 
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-6 gap-y-3 py-4 pr-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-y-3 py-4 pr-4 lg:flex-row lg:flex-wrap lg:items-center lg:gap-x-6">
         <div className="min-w-[9rem]">
           <p className={`font-mono text-base font-bold tabular-nums ${URGENCY_TEXT[urgency]}`}>
             {formatWait(waitMinutes)}
@@ -182,7 +182,7 @@ export function TicketRow({
 
         {/* No column labels: "cu ft", "rooms" and the truck name are self-describing,
             and repeating three headings on every row is noise, not structure. */}
-        <p className="min-w-0 flex-1 truncate font-mono text-sm tabular-nums text-c-ink-2">
+        <p className="min-w-0 flex-1 font-mono text-sm tabular-nums text-c-ink-2">
           <span className="font-bold text-c-ink">{cubicFeet}</span> cu ft
           <Sep />
           {rooms} {rooms === 1 ? 'room' : 'rooms'} · {items} {items === 1 ? 'item' : 'items'}
@@ -190,7 +190,7 @@ export function TicketRow({
           {truckLabel} · {crewSize} crew
         </p>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 lg:ml-auto">
           <p className="font-mono text-base font-bold tabular-nums text-c-ink">
             {formatCents(lowCents)}–{formatCents(highCents)}
           </p>

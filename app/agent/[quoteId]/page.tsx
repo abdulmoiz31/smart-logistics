@@ -196,7 +196,7 @@ export default function AgentQuotePage() {
         </p>
       )}
 
-      <div className="mt-7 grid gap-6 lg:grid-cols-[1fr_22rem]">
+      <div className="mt-7 grid gap-6 md:grid-cols-[1fr_18rem] lg:grid-cols-[1fr_22rem]">
         <section className="space-y-6">
           {rooms.map((room) => (
             <article key={room.id} className="rounded-3xl border border-c-border bg-c-panel p-5 shadow-sm">
