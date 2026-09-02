@@ -1,4 +1,10 @@
 import { NextResponse } from 'next/server';
+import {
+  AGENT_SESSION_COOKIE,
+  RETIRED_AGENT_COOKIE,
+  agentSessionCookieOptions,
+} from '@/lib/agent-auth';
+import { createAgentSession } from '@/lib/agent-session';
 
 export async function POST(request: Request) {
   try {
@@ -15,13 +21,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Incorrect password.' }, { status: 401 });
     }
     const response = NextResponse.json({ ok: true });
-    response.cookies.set('agent_secret', expectedSecret, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 8,
-    });
+    response.cookies.set(AGENT_SESSION_COOKIE, await createAgentSession(expectedSecret), agentSessionCookieOptions);
+    response.cookies.set(RETIRED_AGENT_COOKIE, '', { path: '/', maxAge: 0 });
     return response;
   } catch {
     return NextResponse.json({ error: 'Unable to sign in.' }, { status: 400 });

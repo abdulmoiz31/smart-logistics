@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { PriceRange } from '@/components/PriceRange';
 import { MovingPlan } from '@/components/MovingPlan';
@@ -99,8 +98,7 @@ export default function EstimatePage() {
   return (
     <main className="min-h-screen bg-u-bg px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-3xl">
-        <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-u-ink">Move<span className="text-c-accent">Scan</span></Link><Link href={`/review/${sessionId}`} className="text-sm font-bold text-c-accent">Edit inventory</Link></header>
-        <h1 className="mt-8 text-3xl font-black tracking-tight text-u-ink">Your moving estimate</h1>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Your moving estimate</h1>
         <p className="mt-2 text-u-ink-2">Based on <span className="font-mono tabular-nums">{Math.round(breakdown.totalCubicFeet)}</span> cubic feet across your photographed rooms.</p>
         <section className="mt-6">{confirmed ? <div className="rounded-3xl border border-c-fresh/20 bg-c-fresh p-6 text-c-accent-ink"><p className="text-sm font-bold uppercase tracking-[0.16em] text-c-accent-ink/80">Confirmed price</p><p className="mt-3 text-4xl font-black"><span className="font-mono tabular-nums">{formatCents(quote.confirmedCents!)}</span></p><p className="mt-3 text-sm text-c-accent-ink/80">Confirmed by your moving specialist.</p></div> : <PriceRange lowCents={breakdown.lowCents} highCents={breakdown.highCents} tolerance={breakdown.tolerance} />}</section>
         <section className="mt-5 rounded-2xl border border-u-border bg-u-panel p-5 shadow-sm"><h2 className="font-black text-u-ink">Estimate details</h2><dl className="mt-4 space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-u-ink-3">Volume</dt><dd className="font-bold text-u-ink"><span className="font-mono tabular-nums">{breakdown.totalCubicFeet}</span> cu ft</dd></div><div className="flex justify-between gap-4"><dt className="text-u-ink-3">Base moving cost</dt><dd className="font-bold text-u-ink"><span className="font-mono tabular-nums">{formatCents(breakdown.baseCents)}</span></dd></div><div className="flex justify-between gap-4"><dt className="text-u-ink-3">Crew labor</dt><dd className="font-bold text-u-ink"><span className="font-mono tabular-nums">{formatCents(breakdown.laborCents)}</span></dd></div><div className="flex justify-between gap-4"><dt className="text-u-ink-3">Access adders</dt><dd className="font-bold text-u-ink"><span className="font-mono tabular-nums">{formatCents(breakdown.accessCents)}</span></dd></div></dl></section>

@@ -3,10 +3,10 @@ import { getCaptureSignedUrls, getQuote, getSessionRooms } from '@/lib/db';
 import { isUuid } from '@/lib/validation';
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ quoteId: string }> },
 ) {
-  if (!await isAgentAuthenticated()) return Response.json({ error: 'Unauthorized.' }, { status: 401 });
+  if (!await isAgentAuthenticated(request)) return Response.json({ error: 'Unauthorized.' }, { status: 401 });
   try {
     const { quoteId } = await params;
     if (!isUuid(quoteId)) return Response.json({ error: 'Invalid quote ID.' }, { status: 400 });

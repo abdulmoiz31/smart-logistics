@@ -1,4 +1,16 @@
 @media print {
+  :root,
+  :root[data-theme='dark'] {
+    --u-bg: white;
+    --u-panel: white;
+    --u-panel-2: white;
+    --u-photo-mat: white;
+    --u-border: #e2e8f0;
+    --u-ink: black;
+    --u-ink-2: #334155;
+    --u-ink-3: #475569;
+  }
+
   body {
     background: white;
     color: black;

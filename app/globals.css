@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-
-  /* Customer surfaces — light only, no dark variant by design */
-  --u-bg:      #fbfcfd;
-  --u-panel:   #ffffff;
-  --u-border:  #e6ebf1;
-  --u-ink:     #10151f;
-  --u-ink-2:   #4a5568;
-  --u-ink-3:   #6b7688;
+  --u-bg:        #fbfcfd;
+  --u-panel:     #ffffff;
+  --u-panel-2:   #f5f7fa;
+  --u-photo-mat: #eef2f6;
+  --u-border:    #e6ebf1;
+  --u-ink:       #10151f;
+  --u-ink-2:     #4a5568;
+  --u-ink-3:     #6b7688;
+  --background: var(--u-bg);
+  --foreground: var(--u-ink);
 
   /* Console surfaces — light */
   --c-bg:        #f1f5f9;
@@ -40,6 +40,15 @@
 }
 
 :root[data-theme='dark'] {
+  --u-bg:        #0b1120;
+  --u-panel:     #121a2a;
+  --u-panel-2:   #182235;
+  --u-photo-mat: #080d17;
+  --u-border:    rgb(255 255 255 / 0.12);
+  --u-ink:       #e8edf7;
+  --u-ink-2:     #a4b2c7;
+  --u-ink-3:     #8492a8;
+
   --c-bg:        #080c16;
   --c-panel:     #111827;
   --c-panel-2:   #0f1626;
@@ -67,6 +76,8 @@
 @theme inline {
   --color-u-bg: var(--u-bg);
   --color-u-panel: var(--u-panel);
+  --color-u-panel-2: var(--u-panel-2);
+  --color-u-photo-mat: var(--u-photo-mat);
   --color-u-border: var(--u-border);
   --color-u-ink: var(--u-ink);
   --color-u-ink-2: var(--u-ink-2);

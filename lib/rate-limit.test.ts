@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { bucketsFor, clientIp, consumeQuota } from './rate-limit';
+import { bucketsFor, clientIp, consumeQuota, ipSalt } from './rate-limit';
+
+const VALID_IP_SALT = 'test-rate-limit-salt';
 
 vi.mock('./db', () => ({
   db: vi.fn(() => ({
@@ -9,6 +11,7 @@ vi.mock('./db', () => ({
 
 describe('bucketsFor', () => {
   beforeEach(() => {
+    process.env.RATE_LIMIT_IP_SALT = VALID_IP_SALT;
     process.env.RATE_LIMIT_ANON_PER_DEVICE = '3';
     process.env.RATE_LIMIT_ANON_PER_IP = '9';
     process.env.RATE_LIMIT_USER_PER_DAY = '15';
@@ -40,10 +43,28 @@ describe('bucketsFor', () => {
     expect(result.scopes).toEqual(['device']);
   });
 
+  it('does not require an IP salt when no IP is available', () => {
+    delete process.env.RATE_LIMIT_IP_SALT;
+    const result = bucketsFor({ deviceId: 'd-abc', ip: null, userId: null });
+    expect(result.keys).toEqual(['device:d-abc']);
+  });
+
   it('respects env overrides', () => {
     process.env.RATE_LIMIT_ANON_PER_DEVICE = '5';
     const result = bucketsFor({ deviceId: 'd-abc', ip: null, userId: null });
     expect(result.limitsList).toEqual([5]);
+  });
+});
+
+describe('ipSalt', () => {
+  it('rejects a missing salt', () => {
+    delete process.env.RATE_LIMIT_IP_SALT;
+    expect(ipSalt).toThrow('RATE_LIMIT_IP_SALT must be set to at least 16 characters.');
+  });
+
+  it('rejects a salt shorter than 16 characters', () => {
+    process.env.RATE_LIMIT_IP_SALT = 'too-short';
+    expect(ipSalt).toThrow('RATE_LIMIT_IP_SALT must be set to at least 16 characters.');
   });
 });
 
@@ -70,6 +91,7 @@ describe('clientIp', () => {
 
 describe('consumeQuota', () => {
   beforeEach(() => {
+    process.env.RATE_LIMIT_IP_SALT = VALID_IP_SALT;
     delete process.env.RATE_LIMIT_DISABLED;
     delete process.env.MOVESCAN_DEMO_MODE;
     delete process.env.RATE_LIMIT_ANON_PER_DEVICE;

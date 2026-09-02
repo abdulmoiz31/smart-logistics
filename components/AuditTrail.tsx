@@ -12,5 +12,5 @@ const provenanceLabels: Record<string, string> = {
 export function AuditTrail({ item }: { item: Item }) {
   const key = `${item.source}:${item.editedByUser}`;
   const label = provenanceLabels[key] ?? 'Identified by AI';
-  return <p className="mt-1 text-xs text-slate-400">{label}</p>;
+  return <p className="mt-1 text-xs text-u-ink-3">{label}</p>;
 }

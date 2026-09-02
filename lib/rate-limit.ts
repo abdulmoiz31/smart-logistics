@@ -35,9 +35,16 @@ export function clientIp(request: Request): string | null {
   return request.headers.get('x-real-ip');
 }
 
+export function ipSalt(): string {
+  const salt = process.env.RATE_LIMIT_IP_SALT;
+  if (!salt || salt.length < 16) {
+    throw new Error('RATE_LIMIT_IP_SALT must be set to at least 16 characters.');
+  }
+  return salt;
+}
+
 function hashIp(ip: string): string {
-  const salt = process.env.RATE_LIMIT_IP_SALT ?? 'movescan';
-  return createHash('sha256').update(`${salt}:${ip}`).digest('hex').slice(0, 32);
+  return createHash('sha256').update(`${ipSalt()}:${ip}`).digest('hex').slice(0, 32);
 }
 
 export function bucketsFor(identity: Identity): {

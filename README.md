@@ -34,11 +34,13 @@ SUPABASE_SERVICE_KEY=
 SUPABASE_ANON_KEY=
 AGENT_CONSOLE_SECRET=
 
-# Rate limiting (all optional, defaults shown)
+# Rate limiting (thresholds are optional; defaults shown)
 RATE_LIMIT_ANON_PER_DEVICE=3
 RATE_LIMIT_ANON_PER_IP=9
 RATE_LIMIT_USER_PER_DAY=15
 RATE_LIMIT_USER_IP_PER_DAY=40
+
+# Required: at least 16 random characters. Generate with `openssl rand -hex 32`.
 RATE_LIMIT_IP_SALT=
 RATE_LIMIT_DISABLED=0
 ```
@@ -58,7 +60,7 @@ RATE_LIMIT_DISABLED=0
 | `RATE_LIMIT_ANON_PER_IP` | Max scans/day per IP for anonymous visitors (default: 9). |
 | `RATE_LIMIT_USER_PER_DAY` | Max scans/day per signed-in account (default: 15). |
 | `RATE_LIMIT_USER_IP_PER_DAY` | Max scans/day per IP for signed-in users — account-farming backstop (default: 40). |
-| `RATE_LIMIT_IP_SALT` | Random hex used to hash IPs before storage. Generate with `openssl rand -hex 16`. |
+| `RATE_LIMIT_IP_SALT` | Required secret of at least 16 random characters used to hash IPs before storage. Generate with `openssl rand -hex 32`; rotating it changes every IP bucket hash and resets IP quota continuity. |
 | `RATE_LIMIT_DISABLED` | Set to `1` locally to bypass all limiting (no Vercel IP headers on localhost). |
 
 A `SUPABASE_URL` with a `/rest/v1/` suffix returns **401**, not a routing error — so this

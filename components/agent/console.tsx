@@ -4,7 +4,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import type { HandlingFlag } from '@/lib/types';
 import { formatWait, urgencyOf, type Urgency } from '@/lib/relative-time';
-import { ThemeToggle } from './theme';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 /*
  * Dispatch console primitives.
@@ -56,11 +56,40 @@ export function ConsoleShell({
             <Tab href="/agent/leads" label="Insights" current={active === 'insights'} />
           </nav>
           <h1 className="sr-only">{title}</h1>
-          <ThemeToggle />
+          <div className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
+            <SignOutButton />
+          </div>
         </div>
       </header>
       <div className="relative z-10 mx-auto max-w-6xl px-5 pb-16 pt-7">{children}</div>
     </div>
+  );
+}
+
+/**
+ * Ends the console session. POST, so no page can trigger it with an <img> tag.
+ * A full reload after sign-out lets middleware do the redirect rather than
+ * duplicating the auth decision on the client.
+ */
+function SignOutButton() {
+  return (
+    <form
+      action="/api/agent/logout"
+      method="POST"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void fetch('/api/agent/logout', { method: 'POST' })
+          .then(() => { window.location.href = '/agent/login'; });
+      }}
+    >
+      <button
+        type="submit"
+        className="grid min-h-9 place-items-center rounded-lg border border-c-border px-3 text-sm font-semibold text-c-ink-2 transition hover:border-c-border-hi hover:text-c-ink"
+      >
+        Sign out
+      </button>
+    </form>
   );
 }
 

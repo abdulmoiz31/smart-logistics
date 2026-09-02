@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { AuthBadge } from '@/components/AuthBadge';
+import { AppHeader } from '@/components/AppHeader';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -18,12 +18,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var isAgent=location.pathname.startsWith('/agent');if(!isAgent){document.documentElement.dataset.theme='light';return;}try{var t=localStorage.getItem('movescan-theme');if(!t){t='dark';}document.documentElement.dataset.theme=t;}catch(e){document.documentElement.dataset.theme='dark';}})();`,
+            __html: `(function(){var agent=location.pathname.startsWith('/agent');var fallback=agent?'dark':'light';try{var stored=localStorage.getItem('movescan-theme');document.documentElement.dataset.theme=stored==='dark'||stored==='light'?stored:fallback;}catch(e){document.documentElement.dataset.theme=fallback;}})();`,
           }}
         />
       </head>
       <body>
-        <AuthBadge />
+        {!isAgent && <AppHeader pathname={pathname} />}
         {children}
       </body>
     </html>

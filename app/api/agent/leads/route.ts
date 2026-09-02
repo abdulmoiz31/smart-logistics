@@ -1,8 +1,8 @@
 import { isAgentAuthenticated } from '@/lib/agent-auth';
 import { getLeadsSummary, getLeadsTrend, getVolumeComposition } from '@/lib/db';
 
-export async function GET() {
-  if (!await isAgentAuthenticated()) return Response.json({ error: 'Unauthorized.' }, { status: 401 });
+export async function GET(request: Request) {
+  if (!await isAgentAuthenticated(request)) return Response.json({ error: 'Unauthorized.' }, { status: 401 });
   try {
     const [summary, trend, composition] = await Promise.all([
       getLeadsSummary(),

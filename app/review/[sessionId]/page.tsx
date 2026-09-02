@@ -165,8 +165,7 @@ export default function ReviewPage() {
   return (
     <main className="min-h-screen bg-u-bg px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-3xl pb-24">
-        <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-u-ink">Move<span className="text-c-accent">Scan</span></Link><Link href={`/scan/${sessionId}`} className="text-sm font-bold text-c-accent">Add another room</Link></header>
-        <h1 className="mt-8 text-3xl font-black tracking-tight text-u-ink">Check your inventory</h1>
+        <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Check your inventory</h1>
         <p className="mt-2 text-u-ink-2">{uncertain.length ? "We've surfaced anything uncertain first. Tap through changes -- the estimate updates after review." : 'Review the items below, then get your estimate.'}</p>
         {error && <p role="alert" className="mt-4 rounded-xl border border-c-overdue/20 bg-c-overdue/10 p-3 text-sm font-semibold text-c-overdue">{error}</p>}
         {uncertain.length > 0 && <section className="mt-7"><h2 className="text-lg font-black text-u-ink">We weren&apos;t sure about these</h2><p className="mt-1 text-sm text-u-ink-2">A quick check helps keep your estimate honest.</p>
@@ -182,14 +181,14 @@ export default function ReviewPage() {
                   <p className="font-black text-c-waiting">You&apos;ve used your 3 free AI checks today.</p>
                   <p className="mt-1 text-sm text-u-ink-2">Create a free account to check 15 items a day. It takes a few seconds.</p>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <Link href={`/signup?next=/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-waiting px-4 font-bold text-white">Create free account</Link>
+                    <Link href={`/signup?next=/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-waiting px-4 font-bold text-c-accent-ink">Create free account</Link>
                     <Link href={`/login?next=/review/${sessionId}`} className="grid min-h-11 place-items-center font-semibold text-c-waiting">Already have an account? Sign in</Link>
                   </div>
                 </div>
               )}
             </div>
           )}
-          <div className="mt-3 space-y-3">{uncertain.map(({ item }) => <div key={item.id} className="rounded-2xl border border-c-waiting/20 bg-c-waiting/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-u-ink">{formatLabel(item.name)}</p><p className="mt-1 text-sm text-u-ink-2"><span className="font-mono tabular-nums">{Math.round(item.confidence * 100)}%</span> confidence</p>{item.uncertaintyReason && <p className="mt-0.5 text-xs text-u-ink-3">{item.uncertaintyReason}</p>}</div><button type="button" disabled={busyItemId === item.id || Boolean(quotaBlock)} onClick={() => void refine(item)} className="min-h-11 rounded-xl bg-c-waiting px-3 text-sm font-bold text-white disabled:opacity-50">{busyItemId === item.id ? 'Checking...' : 'Check this'}</button></div></div>)}</div></section>}
+          <div className="mt-3 space-y-3">{uncertain.map(({ item }) => <div key={item.id} className="rounded-2xl border border-c-waiting/20 bg-c-waiting/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-u-ink">{formatLabel(item.name)}</p><p className="mt-1 text-sm text-u-ink-2"><span className="font-mono tabular-nums">{Math.round(item.confidence * 100)}%</span> confidence</p>{item.uncertaintyReason && <p className="mt-0.5 text-xs text-u-ink-3">{item.uncertaintyReason}</p>}</div><button type="button" disabled={busyItemId === item.id || Boolean(quotaBlock)} onClick={() => void refine(item)} className="min-h-11 rounded-xl bg-c-waiting px-3 text-sm font-bold text-c-accent-ink disabled:opacity-50">{busyItemId === item.id ? 'Checking...' : 'Check this'}</button></div></div>)}</div></section>}
         <section className="mt-8 space-y-5">{session.rooms.map((room) => {
           const confirmedItems = room.items.filter((item) => !uncertainIds.has(item.id));
           const roomCubicFeet = confirmedItems.reduce((total, item) => total + item.cubicFeet * item.count, 0);

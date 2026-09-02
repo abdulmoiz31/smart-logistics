@@ -26,10 +26,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-u-bg px-5 py-10 sm:px-8">
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col justify-between">
-        <header className="flex items-center justify-between">
-          <span className="text-xl font-black tracking-tight text-u-ink">Move<span className="text-c-accent">Scan</span></span>
-          <span className="hidden rounded-full bg-u-panel px-3 py-1 text-xs font-bold text-u-ink-2 shadow-sm sm:inline-flex">Moving estimates, made simple</span>
-        </header>
         <section className="grid items-center gap-10 py-16 lg:grid-cols-[1.1fr_.9fr]">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-c-accent">Your home, in your own time</p>

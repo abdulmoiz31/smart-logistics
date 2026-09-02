@@ -35,12 +35,18 @@ async function main() {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await context.newPage();
 
-  // Customer home should stay light regardless of theme.
+  // Customer home honors and persists either theme preference.
   await page.goto(`${BASE_URL}/`);
   await setTheme(page, 'dark');
-  await screenshot(page, 'home-dark-theme-preference');
+  await page.reload();
+  if (await page.locator('html').getAttribute('data-theme') !== 'dark') throw new Error('Customer dark preference did not persist.');
+  await screenshot(page, 'home-dark');
+  await setTheme(page, 'light');
+  await page.reload();
+  if (await page.locator('html').getAttribute('data-theme') !== 'light') throw new Error('Customer light preference did not persist.');
+  await screenshot(page, 'home-light');
 
-  // Login page in both themes.
+  // Agent login page in both themes.
   await page.goto(`${BASE_URL}/agent/login`);
   await setTheme(page, 'dark');
   await screenshot(page, 'login-dark');
@@ -87,9 +93,12 @@ async function main() {
     await page.waitForLoadState('networkidle');
     await screenshot(page, 'detail-dark');
 
-    // Open the first photo lightbox.
-    await page.click('article button:has(img)');
-    await screenshot(page, 'detail-lightbox');
+    // Open the first photo lightbox when the quote includes photos.
+    const photoTrigger = page.locator('article button:has(img)').first();
+    if (await photoTrigger.count()) {
+      await photoTrigger.click();
+      await screenshot(page, 'detail-lightbox');
+    }
   }
 
   await browser.close();

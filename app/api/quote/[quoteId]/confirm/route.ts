@@ -7,7 +7,7 @@ export async function POST(
   { params }: { params: Promise<{ quoteId: string }> },
 ) {
   try {
-    if (!await isAgentAuthenticated()) {
+    if (!await isAgentAuthenticated(request)) {
       return Response.json({ error: 'Unauthorized.' }, { status: 401 });
     }
     const { quoteId } = await params;

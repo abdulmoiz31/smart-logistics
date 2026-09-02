@@ -237,7 +237,6 @@ export default function ScanPage() {
   return (
     <main className="min-h-screen bg-u-bg px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-2xl">
-        <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-u-ink">Move<span className="text-c-accent">Scan</span></Link><span className="text-sm font-semibold text-u-ink-3">Room-by-room scan</span></header>
         {demoMode && !degraded && <p className="mt-5 rounded-xl border border-c-waiting/20 bg-c-waiting/10 p-3 text-sm font-semibold text-c-waiting">Demo mode -- using sample inventory results.</p>}
         {degraded && !demoMode && <p className="mt-5 rounded-xl border border-c-accent/20 bg-c-accent/10 p-3 text-sm font-semibold text-c-accent">Using our backup model -- results may be less precise.</p>}
         {degraded && demoMode && <p className="mt-5 rounded-xl border border-c-overdue/20 bg-c-overdue/10 p-3 text-sm font-semibold text-c-overdue">We couldn&apos;t reach our AI just now -- showing sample results. <button type="button" onClick={() => { setError(''); }} className="font-bold underline">Try again</button></p>}
@@ -255,7 +254,7 @@ export default function ScanPage() {
             <span><strong className="block text-u-ink">Add photos</strong><span className="mt-1 block text-sm text-u-ink-2">Up to 12 photos · choose from your camera or photo library</span></span>
             <input type="file" accept="image/*" multiple onChange={addPhotos} className="sr-only" />
           </label>
-          {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-u-ink text-sm text-u-panel" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
+          {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0 rounded-xl bg-u-photo-mat"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-u-ink text-sm text-u-panel" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
           {error && <p role="alert" className="mt-4 text-sm font-medium text-c-overdue">{error}</p>}
           {quotaBlock && (
             <div className="mt-4 rounded-2xl border border-c-waiting/20 bg-c-waiting/10 p-5">
@@ -269,7 +268,7 @@ export default function ScanPage() {
                   <p className="font-black text-c-waiting">You&apos;ve used your 3 free scans today.</p>
                   <p className="mt-1 text-sm text-u-ink-2">Create a free account to scan 15 rooms a day. It takes a few seconds.</p>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <Link href={`/signup?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-waiting px-4 font-bold text-white">Create free account</Link>
+                    <Link href={`/signup?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-waiting px-4 font-bold text-c-accent-ink">Create free account</Link>
                     <Link href={`/login?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center font-semibold text-c-waiting">Already have an account? Sign in</Link>
                   </div>
                 </div>
