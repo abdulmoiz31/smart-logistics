@@ -21,7 +21,7 @@ type ItemInput = Omit<Item, 'id' | 'roomId'>;
 type ItemPatch = Partial<Pick<Item, 'name' | 'category' | 'count' | 'sizeClass' | 'cubicFeet' | 'confidence' | 'source' | 'ambiguousBetween'>>;
 type Row = Record<string, unknown>;
 
-function db(): SupabaseClient {
+export function db(): SupabaseClient {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_KEY;
   if (!url || !key) {

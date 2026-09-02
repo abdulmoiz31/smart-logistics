@@ -1,14 +1,38 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { DEVICE_COOKIE, resolveDeviceId, deviceCookieOptions } from '@/lib/device';
+import { refreshSession } from '@/lib/supabase/middleware';
 
-export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname === '/agent/login') return NextResponse.next();
-  const expectedSecret = process.env.AGENT_CONSOLE_SECRET;
-  if (expectedSecret && request.cookies.get('agent_secret')?.value === expectedSecret) {
-    return NextResponse.next();
+const AGENT_PREFIX = '/agent';
+
+export async function middleware(request: NextRequest) {
+  const response = NextResponse.next();
+
+  const { id, mint } = resolveDeviceId(request.cookies.get(DEVICE_COOKIE)?.value);
+  if (mint) response.cookies.set(DEVICE_COOKIE, id, deviceCookieOptions);
+
+  await refreshSession(request, response);
+
+  const { pathname } = request.nextUrl;
+  if (pathname.startsWith(AGENT_PREFIX) && pathname !== '/agent/login') {
+    const expectedSecret = process.env.AGENT_CONSOLE_SECRET;
+    if (!expectedSecret || request.cookies.get('agent_secret')?.value !== expectedSecret) {
+      const loginUrl = new URL('/agent/login', request.url);
+      loginUrl.searchParams.set('next', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
   }
-  const loginUrl = new URL('/agent/login', request.url);
-  loginUrl.searchParams.set('next', request.nextUrl.pathname);
-  return NextResponse.redirect(loginUrl);
+
+  return response;
 }
 
-export const config = { matcher: ['/agent/:path*'] };
+export const config = {
+  matcher: [
+    '/',
+    '/scan/:path*',
+    '/review/:path*',
+    '/estimate/:path*',
+    '/signup',
+    '/login',
+    '/agent/:path*',
+  ],
+};

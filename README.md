@@ -31,7 +31,16 @@ MOVESCAN_DEMO_MODE=0
 
 SUPABASE_URL=
 SUPABASE_SERVICE_KEY=
+SUPABASE_ANON_KEY=
 AGENT_CONSOLE_SECRET=
+
+# Rate limiting (all optional, defaults shown)
+RATE_LIMIT_ANON_PER_DEVICE=3
+RATE_LIMIT_ANON_PER_IP=9
+RATE_LIMIT_USER_PER_DAY=15
+RATE_LIMIT_USER_IP_PER_DAY=40
+RATE_LIMIT_IP_SALT=
+RATE_LIMIT_DISABLED=0
 ```
 
 ### Where each value comes from
@@ -43,7 +52,14 @@ AGENT_CONSOLE_SECRET=
 | `MOVESCAN_DEMO_MODE` | `0` calls the real API, `1` serves fixtures. |
 | `SUPABASE_URL` | Supabase → Settings → API → **Project URL**. Base origin only — no `/rest/v1/` suffix. |
 | `SUPABASE_SERVICE_KEY` | Same page → the **secret** key (`sb_secret_…`), not the publishable/anon key. |
+| `SUPABASE_ANON_KEY` | Same page → the **anon / publishable** key. Used for email+password auth. NOT the service key. |
 | `AGENT_CONSOLE_SECRET` | You choose it. Generate with `openssl rand -hex 16`. |
+| `RATE_LIMIT_ANON_PER_DEVICE` | Max scans/day per device cookie for anonymous visitors (default: 3). |
+| `RATE_LIMIT_ANON_PER_IP` | Max scans/day per IP for anonymous visitors (default: 9). |
+| `RATE_LIMIT_USER_PER_DAY` | Max scans/day per signed-in account (default: 15). |
+| `RATE_LIMIT_USER_IP_PER_DAY` | Max scans/day per IP for signed-in users — account-farming backstop (default: 40). |
+| `RATE_LIMIT_IP_SALT` | Random hex used to hash IPs before storage. Generate with `openssl rand -hex 16`. |
+| `RATE_LIMIT_DISABLED` | Set to `1` locally to bypass all limiting (no Vercel IP headers on localhost). |
 
 A `SUPABASE_URL` with a `/rest/v1/` suffix returns **401**, not a routing error — so this
 misconfiguration impersonates a bad key. Check the URL before suspecting the key.
@@ -51,6 +67,20 @@ misconfiguration impersonates a bad key. Check the URL before suspecting the key
 Then run `db/schema.sql` once in the Supabase SQL editor and create a **private** Storage
 bucket named exactly `captures` — `lib/db.ts` hardcodes that name, so a typo surfaces as a
 vague upload failure rather than a clear error.
+
+### Supabase auth configuration (for rate limiting + email/password signup)
+
+In the Supabase dashboard:
+
+1. **Authentication → Providers → Email**: enable, turn **"Confirm email" OFF**.
+2. **Authentication → Providers → Email**: set minimum password length to **8**.
+3. Run `db/migrations/0001_scan_usage.sql` in the Supabase SQL editor to create the rate-limiting table and function.
+
+No redirect URL configuration is needed (password flow, not magic link).
+
+### Scan rate limiting
+
+Anonymous visitors get 3 scans/day per device cookie and 9 per IP. Signed-up users (free email+password) get 15/day per account and 40 per IP. All limits are configurable via env vars — no code change needed. `MOVESCAN_DEMO_MODE=1` also bypasses rate limiting.
 
 Verify all four at once:
 

@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import { AccessFlags } from '@/components/AccessFlags';
 import { SimilarItemPicker } from '@/components/SimilarItemPicker';
 import { downscaleImage } from '@/lib/image';
+import { asQuotaError, type QuotaError } from '@/lib/quota-error';
 import type { AccessFlag, Item, Room, RoomType, SessionDetails } from '@/lib/types';
 
 const roomTypes: Array<{ value: RoomType; label: string }> = [
@@ -27,11 +28,11 @@ interface LocalPhoto {
 }
 
 const analysisStages = [
-  'Saving room settings…',
-  'Uploading photos…',
-  'Looking for furniture…',
-  'Checking for duplicates across your photos…',
-  'Matching to our catalogue…',
+  'Saving room settings...',
+  'Uploading photos...',
+  'Looking for furniture...',
+  'Checking for duplicates across your photos...',
+  'Matching to our catalogue...',
 ];
 
 export default function ScanPage() {
@@ -48,6 +49,7 @@ export default function ScanPage() {
   const [degraded, setDegraded] = useState(false);
   const [error, setError] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [quotaBlock, setQuotaBlock] = useState<QuotaError | null>(null);
 
   const creatingRoomRef = useRef(false);
 
@@ -145,7 +147,7 @@ export default function ScanPage() {
       trimmed.push(photo);
     }
     if (trimmed.length < prepared.length) {
-      setError('That is a lot of photos — analysing the first batch. You can add more after.');
+      setError('That is a lot of photos -- analysing the first batch. You can add more after.');
       prepared.slice(trimmed.length).forEach((p) => URL.revokeObjectURL(p.preview));
     }
     setPhotos((current) => [...current, ...trimmed]);
@@ -180,7 +182,13 @@ export default function ScanPage() {
       formData.append('roomType', roomType);
       photos.forEach((photo) => formData.append('files', photo.file));
       const response = await fetch('/api/analyze', { method: 'POST', body: formData });
-      const data = await response.json() as { items?: Item[]; roomType?: RoomType; demoMode?: boolean; degraded?: boolean; error?: string };
+      const data = await response.json() as { items?: Item[]; roomType?: RoomType; demoMode?: boolean; degraded?: boolean; error?: string; code?: string; authenticated?: boolean };
+
+      const quota = asQuotaError(response.status, data);
+      if (quota) {
+        setQuotaBlock(quota);
+        return;
+      }
       if (!response.ok || !data.items || !data.roomType) throw new Error(data.error ?? 'Unable to analyse this room.');
       setItems(data.items);
       setRoom((current) => current ? { ...current, roomType: data.roomType!, accessFlags, items: data.items! } : current);
@@ -210,16 +218,16 @@ export default function ScanPage() {
     setPickerOpen(false);
   }
 
-  if (loading) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-slate-600">Preparing your scan…</main>;
+  if (loading) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6 text-slate-600">Preparing your scan...</main>;
   if (error && !room) return <main className="grid min-h-screen place-items-center bg-slate-50 p-6"><div className="max-w-sm text-center"><p className="font-semibold text-rose-700">{error}</p><Link href="/" className="mt-4 inline-block font-bold text-cyan-700">Start again</Link></div></main>;
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-2xl">
         <header className="flex items-center justify-between"><Link href="/" className="text-xl font-black text-slate-950">Move<span className="text-cyan-700">Scan</span></Link><span className="text-sm font-semibold text-slate-500">Room-by-room scan</span></header>
-        {demoMode && !degraded && <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Demo mode — using sample inventory results.</p>}
-        {degraded && !demoMode && <p className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-900">Using our backup model — results may be less precise.</p>}
-        {degraded && demoMode && <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-900">We couldn&apos;t reach our AI just now — showing sample results. <button type="button" onClick={() => { setError(''); }} className="font-bold underline">Try again</button></p>}
+        {demoMode && !degraded && <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">Demo mode -- using sample inventory results.</p>}
+        {degraded && !demoMode && <p className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm font-semibold text-blue-900">Using our backup model -- results may be less precise.</p>}
+        {degraded && demoMode && <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm font-semibold text-rose-900">We couldn&apos;t reach our AI just now -- showing sample results. <button type="button" onClick={() => { setError(''); }} className="font-bold underline">Try again</button></p>}
         <section className="mt-6 rounded-3xl bg-white p-5 shadow-sm sm:p-7">
           <p className="text-sm font-bold uppercase tracking-[0.14em] text-cyan-700">Room {items.length ? 'ready' : '1'}</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Show us this room.</h1>
@@ -236,7 +244,26 @@ export default function ScanPage() {
           </label>
           {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-slate-950 text-sm text-white" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
           {error && <p role="alert" className="mt-4 text-sm font-medium text-rose-700">{error}</p>}
-          <button type="button" disabled={!photos.length || analysing} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-cyan-700 px-5 font-bold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300">
+          {quotaBlock && (
+            <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 p-5">
+              {quotaBlock.authenticated ? (
+                <div>
+                  <p className="font-black text-amber-950">Daily limit reached (15 scans)</p>
+                  <p className="mt-1 text-sm text-amber-900">Your allowance resets tomorrow.</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="font-black text-amber-950">You&apos;ve used your 3 free scans today.</p>
+                  <p className="mt-1 text-sm text-amber-900">Create a free account to scan 15 rooms a day. It takes a few seconds.</p>
+                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                    <Link href={`/signup?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-amber-600 px-4 font-bold text-white">Create free account</Link>
+                    <Link href={`/login?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center font-semibold text-amber-900">Already have an account? Sign in</Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          <button type="button" disabled={!photos.length || analysing || Boolean(quotaBlock)} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-cyan-700 px-5 font-bold text-white transition hover:bg-cyan-800 disabled:cursor-not-allowed disabled:bg-slate-300">
             {analysing ? analysisStages[analysisStage] : 'Analyse this room'}
           </button>
         </section>
