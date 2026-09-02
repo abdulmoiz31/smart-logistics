@@ -73,7 +73,7 @@ export function CompositionChart({ title, description, slices }: CompositionChar
             return (
               <div
                 key={slices[i].label}
-                className="relative flex items-center justify-center transition-opacity"
+                className="relative flex items-center justify-center transition-opacity motion-reduce:transition-none"
                 style={{
                   width: `${segment.percent}%`,
                   backgroundColor: COLORS[i % COLORS.length],

@@ -37,7 +37,7 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-      className="ml-auto grid size-9 place-items-center rounded-lg border border-c-border text-c-ink-2 transition hover:border-c-border-hi hover:text-c-ink"
+      className="ml-auto grid size-9 place-items-center rounded-lg border border-c-border text-c-ink-2 transition hover:border-c-border-hi hover:text-c-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-c-accent"
     >
       <span aria-hidden className="text-sm">{theme === 'dark' ? '☀' : '☾'}</span>
     </button>

@@ -35,6 +35,8 @@ const analysisStages = [
   'Matching to our catalogue...',
 ];
 
+const REDUCED_MOTION_STAGE = 'Analysing your photos — this may take a moment.';
+
 export default function ScanPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [room, setRoom] = useState<Room>();
@@ -50,12 +52,23 @@ export default function ScanPage() {
   const [error, setError] = useState('');
   const [pickerOpen, setPickerOpen] = useState(false);
   const [quotaBlock, setQuotaBlock] = useState<QuotaError | null>(null);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   const creatingRoomRef = useRef(false);
 
   useEffect(() => {
-    if (!analysing) {
-      setAnalysisStage(0);
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReducedMotion(query.matches);
+    function onChange(event: MediaQueryListEvent) {
+      setReducedMotion(event.matches);
+    }
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    if (!analysing || reducedMotion) {
+      if (!analysing) setAnalysisStage(0);
       return;
     }
 
@@ -63,7 +76,7 @@ export default function ScanPage() {
       setAnalysisStage((stage) => (stage + 1) % analysisStages.length);
     }, 2_500);
     return () => window.clearInterval(timer);
-  }, [analysing]);
+  }, [analysing, reducedMotion]);
 
   const createRoom = useCallback(async () => {
     if (creatingRoomRef.current) return;
@@ -264,7 +277,7 @@ export default function ScanPage() {
             </div>
           )}
           <button type="button" disabled={!photos.length || analysing || Boolean(quotaBlock)} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-c-accent px-5 font-bold text-c-accent-ink transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-u-border disabled:text-u-ink-3">
-            {analysing ? analysisStages[analysisStage] : 'Analyse this room'}
+            {analysing ? (reducedMotion ? REDUCED_MOTION_STAGE : analysisStages[analysisStage]) : 'Analyse this room'}
           </button>
         </section>
         {items.length > 0 && <section className="mt-5 rounded-3xl border border-c-fresh/20 bg-c-fresh/10 p-5"><h2 className="font-bold text-c-fresh">We found <span className="font-mono tabular-nums">{items.length}</span> item{items.length === 1 ? '' : 's'}.</h2><p className="mt-1 text-sm text-u-ink-2">You&apos;ll be able to check every item before your estimate.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => void createRoom()} className="min-h-11 rounded-xl border border-c-fresh/30 bg-u-panel font-semibold text-c-fresh">Add another room</button><Link href={`/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-fresh font-semibold text-c-accent-ink">Review my inventory</Link></div></section>}

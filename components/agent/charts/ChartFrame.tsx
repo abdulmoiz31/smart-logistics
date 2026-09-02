@@ -21,8 +21,9 @@ export function ChartFrame({ title, description, legend, children, table, ariaLa
         </div>
         <button
           type="button"
+          aria-pressed={showTable}
           onClick={() => setShowTable((s) => !s)}
-          className="rounded-lg border border-c-border px-3 py-1.5 text-xs font-bold text-c-ink-2 transition hover:border-c-border-hi hover:text-c-ink"
+          className="rounded-lg border border-c-border px-3 py-1.5 text-xs font-bold text-c-ink-2 transition hover:border-c-border-hi hover:text-c-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-c-accent"
         >
           {showTable ? 'Chart' : 'Table'}
         </button>

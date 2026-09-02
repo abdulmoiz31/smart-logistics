@@ -72,7 +72,7 @@ export function FunnelChart({ title, description, stages, totalScans }: FunnelCh
                 <span className="w-36 shrink-0 text-sm font-medium text-c-ink">{stage.label}</span>
                 <div className="relative h-3.5 flex-1 overflow-hidden rounded-r-lg bg-c-panel-2">
                   <div
-                    className="h-full rounded-r-lg transition-all"
+                    className="h-full rounded-r-lg transition-all motion-reduce:transition-none"
                     style={{ width: `${pct}%`, backgroundColor: baseColor, opacity }}
                   />
                 </div>

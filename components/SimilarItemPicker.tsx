@@ -24,7 +24,7 @@ export function SimilarItemPicker({ roomType, onPick, onCancel }: SimilarItemPic
           <h2 className="font-semibold text-u-ink">Add something we missed</h2>
           <p className="mt-1 text-sm text-u-ink-2">Pick the item that is most similar.</p>
         </div>
-        <button type="button" className="min-h-11 px-2 text-sm font-semibold text-u-ink-2" onClick={onCancel}>Close</button>
+        <button type="button" className="min-h-11 rounded-lg px-2 text-sm font-semibold text-u-ink-2 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-c-accent" onClick={onCancel}>Close</button>
       </div>
       <div className="mt-4 max-h-64 overflow-y-auto rounded-xl bg-u-panel p-2">
         {entries.map((entry) => (
@@ -32,7 +32,7 @@ export function SimilarItemPicker({ roomType, onPick, onCancel }: SimilarItemPic
             type="button"
             key={entry.category}
             onClick={() => setCategory(entry.category)}
-            className={`block min-h-11 w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+            className={`block min-h-11 w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-c-accent ${
               category === entry.category ? 'bg-c-accent text-c-accent-ink' : 'text-u-ink hover:bg-u-bg'
             }`}
           >
@@ -46,7 +46,7 @@ export function SimilarItemPicker({ roomType, onPick, onCancel }: SimilarItemPic
           <SizeChips value={sizeClass} onChange={setSizeClass} />
           <button
             type="button"
-            className="min-h-11 w-full rounded-xl bg-c-accent px-4 font-semibold text-c-accent-ink transition hover:opacity-90"
+            className="min-h-11 w-full rounded-xl bg-c-accent px-4 font-semibold text-c-accent-ink transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-c-accent"
             onClick={() => onPick(selected.category, sizeClass)}
           >
             Add item

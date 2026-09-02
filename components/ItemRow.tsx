@@ -31,13 +31,13 @@ export function ItemRow({ item, onChange, onRemove, busy = false, variant = 'cus
           type="button"
           onClick={onRemove}
           disabled={busy}
-          className="min-h-11 rounded-lg px-2 text-sm font-semibold text-c-overdue hover:bg-c-overdue/10 disabled:opacity-50"
+          className="min-h-11 rounded-lg px-2 text-sm font-semibold text-c-overdue transition hover:bg-c-overdue/10 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-c-overdue"
         >
           Remove
         </button>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
-        <Stepper value={item.count} onChange={(count) => onChange({ count })} variant={variant} />
+        <Stepper value={item.count} onChange={(count) => onChange({ count })} variant={variant} itemName={item.name} />
         <SizeChips value={item.sizeClass} onChange={(sizeClass) => onChange({ sizeClass })} variant={variant} />
       </div>
     </article>

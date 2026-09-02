@@ -29,7 +29,7 @@ export function AccessFlags({ value, onChange }: AccessFlagsProps) {
             key={option.flag}
             onClick={() => toggle(option.flag)}
             aria-pressed={selected}
-            className={`flex min-h-11 w-full items-center justify-between rounded-xl border px-3 text-left text-sm font-medium transition ${
+            className={`flex min-h-11 w-full items-center justify-between rounded-xl border px-3 text-left text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-c-accent ${
               selected
                 ? 'border-c-accent bg-c-accent/10 text-c-accent'
                 : 'border-u-border bg-u-panel text-u-ink-2 hover:border-u-border/80'
