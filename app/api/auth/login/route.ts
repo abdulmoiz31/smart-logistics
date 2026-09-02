@@ -20,7 +20,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Incorrect email or password.' }, { status: 401 });
     }
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (cause) {
+    console.error('POST /api/auth/login failed', cause);
     return NextResponse.json({ error: 'Unable to sign in.' }, { status: 400 });
   }
 }

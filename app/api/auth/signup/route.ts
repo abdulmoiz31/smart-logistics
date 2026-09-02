@@ -24,7 +24,8 @@ export async function POST(request: Request) {
       );
     }
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (cause) {
+    console.error('POST /api/auth/signup failed', cause);
     return NextResponse.json({ error: 'Unable to create your account.' }, { status: 400 });
   }
 }

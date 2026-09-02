@@ -6,9 +6,18 @@ export async function AuthBadge() {
 
   if (!user) {
     return (
-      <div className="fixed right-4 top-4 z-50">
-        <Link href="/login" className="text-sm font-semibold text-slate-700 hover:text-cyan-700">
+      <div className="fixed right-4 top-4 z-50 flex items-center gap-2">
+        <Link
+          href="/login"
+          className="grid min-h-9 place-items-center rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+        >
           Sign in
+        </Link>
+        <Link
+          href="/signup"
+          className="grid min-h-9 place-items-center rounded-xl bg-cyan-700 px-4 text-sm font-bold text-white shadow-sm transition hover:bg-cyan-800"
+        >
+          Sign up
         </Link>
       </div>
     );

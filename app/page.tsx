@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 export default function Home() {
@@ -34,14 +35,22 @@ export default function Home() {
             <p className="text-sm font-bold uppercase tracking-[0.18em] text-cyan-700">Your home, in your own time</p>
             <h1 className="mt-4 max-w-xl text-5xl font-black tracking-[-0.055em] text-slate-950 sm:text-6xl">Get a moving estimate from your phone.</h1>
             <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">Take a few photos of each room. We&apos;ll build your inventory, explain uncertainty, and give you a clear estimate range.</p>
-            <button
-              type="button"
-              onClick={startScan}
-              disabled={starting}
-              className="mt-8 min-h-12 rounded-2xl bg-cyan-700 px-6 text-base font-bold text-white shadow-lg shadow-cyan-700/20 transition hover:bg-cyan-800 disabled:cursor-wait disabled:opacity-70"
-            >
-              {starting ? 'Starting your scan…' : 'Start your free scan'}
-            </button>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={startScan}
+                disabled={starting}
+                className="min-h-12 rounded-2xl bg-cyan-700 px-6 text-base font-bold text-white shadow-lg shadow-cyan-700/20 transition hover:bg-cyan-800 disabled:cursor-wait disabled:opacity-70"
+              >
+                {starting ? 'Starting your scan…' : 'Start your free scan'}
+              </button>
+              <Link
+                href="/signup"
+                className="grid min-h-12 place-items-center rounded-2xl border-2 border-cyan-700 bg-white px-6 text-base font-bold text-cyan-700 transition hover:bg-cyan-50"
+              >
+                Sign up
+              </Link>
+            </div>
             {error && <p role="alert" className="mt-3 text-sm font-medium text-rose-700">{error}</p>}
             <p className="mt-4 text-sm text-slate-500">No signup. No credit card. Just photos.</p>
           </div>

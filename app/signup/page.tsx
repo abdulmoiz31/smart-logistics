@@ -4,11 +4,42 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+function EyeIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      {open ? (
+        <>
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+          <circle cx="12" cy="12" r="3" />
+        </>
+      ) : (
+        <>
+          <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+          <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+          <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+          <line x1="2" x2="22" y1="2" y2="22" />
+        </>
+      )}
+    </svg>
+  );
+}
+
 function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +68,7 @@ function SignupForm() {
     <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl">
       <p className="text-sm font-bold uppercase tracking-[0.16em] text-cyan-700">MoveScan</p>
       <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Create your account</h1>
-      <p className="mt-2 text-sm text-slate-600">Free. Takes a few seconds. 15 scans a day.</p>
+      <p className="mt-2 text-sm text-slate-600">Enjoy generous daily scan limits</p>
       <label className="mt-6 block text-sm font-bold text-slate-800">
         Email
         <input
@@ -52,15 +83,25 @@ function SignupForm() {
       </label>
       <label className="mt-4 block text-sm font-bold text-slate-800">
         Password
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 px-3"
-          autoComplete="new-password"
-          minLength={8}
-          required
-        />
+        <span className="relative mt-2 block">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="min-h-11 w-full rounded-xl border border-slate-300 px-3 pr-10"
+            autoComplete="new-password"
+            minLength={8}
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+          >
+            <EyeIcon open={showPassword} />
+          </button>
+        </span>
         <span className="mt-1 block text-xs font-normal text-slate-500">At least 8 characters.</span>
       </label>
       {error && <p role="alert" className="mt-3 text-sm font-semibold text-rose-700">{error}</p>}
