@@ -1,3 +1,4 @@
+import { formatQuantity } from '@/lib/moving-plan';
 import { HandlingBadge } from './HandlingBadge';
 import type { PackingItem, TruckPlan, VolumeContext } from '@/lib/moving-plan';
 import type { HandlingFlag } from '@/lib/types';
@@ -13,7 +14,9 @@ export function MovingPlan({ plan, packing, handling, volumeContext }: MovingPla
   return (
     <section className="mt-5 space-y-5">
       {volumeContext && (
-        <p className="text-sm text-slate-500">{volumeContext.comparison}</p>
+        <p className="text-sm text-slate-500">
+          {volumeContext.comparison} — typically {volumeContext.typicalLow.toLocaleString('en-US')}–{volumeContext.typicalHigh.toLocaleString('en-US')} cu ft.
+        </p>
       )}
 
       <div className="rounded-2xl bg-white p-5 shadow-sm">
@@ -43,9 +46,11 @@ export function MovingPlan({ plan, packing, handling, volumeContext }: MovingPla
       {handling.length > 0 && (
         <div className="rounded-2xl bg-white p-5 shadow-sm">
           <h2 className="font-black text-slate-950">Special handling</h2>
-          <ul className="mt-4 space-y-3">
+          {/* One shared grid, not per-row flex: the badge column sizes to the widest
+              badge so every row's item list starts at the same x position. */}
+          <ul className="mt-4 grid grid-cols-[max-content_1fr] items-baseline gap-x-3 gap-y-2.5 text-sm">
             {handling.map((group) => (
-              <li key={group.flag} className="flex flex-wrap items-start gap-2 text-sm">
+              <li key={group.flag} className="contents">
                 <HandlingBadge flag={group.flag} />
                 <span className="text-slate-600">{group.items.join(', ')}</span>
               </li>
@@ -63,7 +68,7 @@ export function MovingPlan({ plan, packing, handling, volumeContext }: MovingPla
             {packing.map((line) => (
               <div key={line.label} className="contents">
                 <dt className="text-slate-500">{line.label}</dt>
-                <dd className="font-bold">{line.quantity} {line.unit}</dd>
+                <dd className="font-bold">{formatQuantity(line.quantity, line.unit)}</dd>
               </div>
             ))}
           </dl>
