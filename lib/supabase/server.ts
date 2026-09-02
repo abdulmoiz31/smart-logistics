@@ -26,7 +26,12 @@ export async function supabaseServer() {
 export async function getUser() {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) return null;
 
-  const supabase = await supabaseServer();
-  const { data } = await supabase.auth.getUser();
-  return data.user ?? null;
+  try {
+    const supabase = await supabaseServer();
+    const { data } = await supabase.auth.getUser();
+    return data.user ?? null;
+  } catch {
+    // Static generation has no request context (cookies() unavailable).
+    return null;
+  }
 }
