@@ -5,7 +5,7 @@ import { ThemeToggle } from './ThemeToggle';
 
 function actionFor(pathname: string) {
   const [, route, sessionId] = pathname.split('/');
-
+  //routes
   if (pathname === '/') {
     return <span className="hidden rounded-full bg-u-panel px-3 py-1 text-xs font-bold text-u-ink-2 shadow-sm sm:inline-flex">Moving estimates, made simple</span>;
   }
