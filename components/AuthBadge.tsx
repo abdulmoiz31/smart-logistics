@@ -1,5 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import Link from 'next/link';
+import { UserMenu } from './UserMenu';
 
 export function AuthBadge({ user }: { user: User | null }) {
   if (!user) {
@@ -21,14 +22,5 @@ export function AuthBadge({ user }: { user: User | null }) {
     );
   }
 
-  return (
-    <div className="flex items-center gap-3">
-      <span className="max-w-36 truncate text-sm text-u-ink-3">{user.email}</span>
-      <form action="/api/auth/logout" method="POST">
-        <button type="submit" className="min-h-9 text-sm font-semibold text-u-ink-2 hover:text-c-accent">
-          Sign out
-        </button>
-      </form>
-    </div>
-  );
+  return <UserMenu email={user.email ?? 'Signed in'} />;
 }

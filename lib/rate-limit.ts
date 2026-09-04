@@ -81,6 +81,59 @@ export function bucketsFor(identity: Identity): {
   return { keys, limitsList, scopes };
 }
 
+export interface QuotaStatus {
+  remaining: number;
+  limit: number;
+  authenticated: boolean;
+  unlimited: boolean;
+}
+
+interface UsageRow {
+  bucket_key: string;
+  count: number;
+}
+
+/**
+ * Read-only view of the caller's remaining AI calls today. Never mints an
+ * identity and never increments a counter — safe to call on every page load.
+ */
+export async function peekQuota(identity: Identity): Promise<QuotaStatus> {
+  const authenticated = Boolean(identity.userId);
+
+  if (process.env.RATE_LIMIT_DISABLED === '1' || process.env.MOVESCAN_DEMO_MODE === '1') {
+    return { remaining: Infinity, limit: Infinity, authenticated, unlimited: true };
+  }
+
+  const { keys, limitsList } = bucketsFor(identity);
+  if (!keys.length) {
+    return { remaining: 0, limit: 0, authenticated, unlimited: false };
+  }
+  const primaryLimit = limitsList[0] ?? 0;
+
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data, error } = await db()
+      .from('scan_usage')
+      .select('bucket_key, count')
+      .in('bucket_key', keys)
+      .eq('usage_date', today);
+    if (error) {
+      console.error('[rate-limit] peekQuota query failed', error);
+      return { remaining: primaryLimit, limit: primaryLimit, authenticated, unlimited: false };
+    }
+    const used = new Map((data as UsageRow[] ?? []).map((row) => [row.bucket_key, row.count]));
+    let remaining = Infinity;
+    keys.forEach((key, index) => {
+      const usedCount = used.get(key) ?? 0;
+      remaining = Math.min(remaining, Math.max(0, limitsList[index] - usedCount));
+    });
+    return { remaining, limit: primaryLimit, authenticated, unlimited: false };
+  } catch (cause) {
+    console.error('[rate-limit] peekQuota threw', cause);
+    return { remaining: primaryLimit, limit: primaryLimit, authenticated, unlimited: false };
+  }
+}
+
 export async function consumeQuota(identity: Identity): Promise<QuotaResult> {
   const authenticated = Boolean(identity.userId);
 

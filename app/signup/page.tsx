@@ -58,6 +58,7 @@ function SignupForm() {
       const next = searchParams.get('next');
       const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/';
       router.replace(safeNext);
+      router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to create your account.');
       setLoading(false);

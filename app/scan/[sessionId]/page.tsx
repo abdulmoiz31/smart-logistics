@@ -7,6 +7,7 @@ import { AccessFlags } from '@/components/AccessFlags';
 import { SimilarItemPicker } from '@/components/SimilarItemPicker';
 import { downscaleImage } from '@/lib/image';
 import { asQuotaError, type QuotaError } from '@/lib/quota-error';
+import type { QuotaStatus } from '@/lib/rate-limit';
 import type { AccessFlag, Item, Room, RoomType, SessionDetails } from '@/lib/types';
 
 const roomTypes: Array<{ value: RoomType; label: string }> = [
@@ -37,6 +38,14 @@ const analysisStages = [
 
 const REDUCED_MOTION_STAGE = 'Analysing your photos — this may take a moment.';
 
+function quotaRemainingText(status: QuotaStatus | null): string {
+  if (!status || status.unlimited || !Number.isFinite(status.remaining)) {
+    return 'Choose from your camera or photo library';
+  }
+  const label = status.remaining === 1 ? 'scan' : 'scans';
+  return `${status.remaining} ${label} remaining today · choose from your camera or photo library`;
+}
+
 export default function ScanPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [room, setRoom] = useState<Room>();
@@ -53,8 +62,23 @@ export default function ScanPage() {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [quotaBlock, setQuotaBlock] = useState<QuotaError | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [quotaStatus, setQuotaStatus] = useState<QuotaStatus | null>(null);
 
   const creatingRoomRef = useRef(false);
+
+  const refreshQuota = useCallback(async () => {
+    try {
+      const response = await fetch('/api/quota');
+      const data = await response.json() as QuotaStatus;
+      setQuotaStatus(data);
+    } catch {
+      // Non-critical — the photo picker just falls back to the generic copy.
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshQuota();
+  }, [refreshQuota]);
 
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -200,6 +224,7 @@ export default function ScanPage() {
       const quota = asQuotaError(response.status, data);
       if (quota) {
         setQuotaBlock(quota);
+        setQuotaStatus((current) => current && { ...current, remaining: 0 });
         return;
       }
       if (!response.ok || !data.items || !data.roomType) throw new Error(data.error ?? 'Unable to analyse this room.');
@@ -208,6 +233,7 @@ export default function ScanPage() {
       setRoomType(data.roomType);
       setDemoMode(Boolean(data.demoMode));
       setDegraded(Boolean(data.degraded));
+      void refreshQuota();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to analyse this room.');
     } finally {
@@ -251,7 +277,7 @@ export default function ScanPage() {
           </label>
           <div className="mt-6"><AccessFlags value={accessFlags} onChange={setAccessFlags} /></div>
           <label className="mt-6 grid min-h-32 cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-c-accent/30 bg-c-accent/10 p-4 text-center transition hover:bg-c-accent/15">
-            <span><strong className="block text-u-ink">Add photos</strong><span className="mt-1 block text-sm text-u-ink-2">Up to 12 photos · choose from your camera or photo library</span></span>
+            <span><strong className="block text-u-ink">Add photos</strong><span className="mt-1 block text-sm text-u-ink-2">{quotaRemainingText(quotaStatus)}</span></span>
             <input type="file" accept="image/*" multiple onChange={addPhotos} className="sr-only" />
           </label>
           {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0 rounded-xl bg-u-photo-mat"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-u-ink text-sm text-u-panel" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}

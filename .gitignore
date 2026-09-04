@@ -46,5 +46,10 @@ next-env.d.ts
 .vscode/
 .idea/
 
+# Locally-installed agent skills (e.g. `npx skills add ...`) - per-machine
+# tooling for AI assistants, not part of the app.
+.agents/
+skills-lock.json
+
 # Local verification screenshot output
 tmp/

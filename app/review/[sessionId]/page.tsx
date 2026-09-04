@@ -165,6 +165,16 @@ export default function ReviewPage() {
   return (
     <main className="min-h-screen bg-u-bg px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-3xl pb-24">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="inline-flex min-h-9 items-center gap-1.5 text-sm font-bold text-u-ink-2 transition hover:text-c-accent"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Back
+        </button>
         <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Check your inventory</h1>
         <p className="mt-2 text-u-ink-2">{uncertain.length ? "We've surfaced anything uncertain first. Tap through changes -- the estimate updates after review." : 'Review the items below, then get your estimate.'}</p>
         {error && <p role="alert" className="mt-4 rounded-xl border border-c-overdue/20 bg-c-overdue/10 p-3 text-sm font-semibold text-c-overdue">{error}</p>}
@@ -199,7 +209,7 @@ export default function ReviewPage() {
             return <div key={room.id} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm"><div className="flex items-center justify-between gap-3"><div><h2 className="font-bold text-u-ink">{roomLabel}</h2><p className="mt-1 text-sm text-u-ink-2">All items for this room are shown above for review.</p></div>{addButton}</div></div>;
           }
 
-          return <details key={room.id} open={session.rooms.length === 1} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm"><summary className="cursor-pointer font-black text-u-ink">{roomLabel} · <span className="font-mono tabular-nums">{confirmedItems.length}</span> confirmed item{confirmedItems.length === 1 ? '' : 's'} · <span className="font-mono tabular-nums">{Math.round(roomCubicFeet * 10) / 10}</span> cu ft</summary><div className="mt-4"><div className="mb-2 flex justify-end">{addButton}</div><div className="space-y-3">{confirmedItems.map((item) => <ItemRow key={item.id} item={item} busy={busyItemId === item.id} onChange={(patch) => void updateItem(item, patch)} onRemove={() => void deleteItem(item)} />)}</div></div></details>;
+          return <details key={room.id} open={session.rooms.length === 1} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm"><summary className="cursor-pointer font-black text-u-ink">{roomLabel} · <span className="font-mono tabular-nums">{confirmedItems.length}</span> confirmed item{confirmedItems.length === 1 ? '' : 's'} · <span className="font-mono tabular-nums">{Math.round(roomCubicFeet * 10) / 10}</span> cu ft</summary><div className="mt-4"><div className="space-y-3">{confirmedItems.map((item) => <ItemRow key={item.id} item={item} busy={busyItemId === item.id} onChange={(patch) => void updateItem(item, patch)} onRemove={() => void deleteItem(item)} />)}</div><div className="mt-3 flex justify-end">{addButton}</div></div></details>;
         })}</section>
         {pickerRoom && <div className="mt-6"><SimilarItemPicker roomType={pickerRoom.roomType} onPick={addItem} onCancel={() => setPickerRoom(undefined)} /></div>}
         <footer className="sticky bottom-0 mt-8 border-t border-u-border bg-u-bg/95 py-4 backdrop-blur"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold text-u-ink-3">Total volume</p><p className="text-xl font-black text-u-ink"><span className="font-mono tabular-nums">{Math.round(totalCubicFeet * 10) / 10}</span> cu ft</p></div><button type="button" onClick={() => void getEstimate()} disabled={creatingEstimate} className="min-h-12 rounded-2xl bg-c-accent px-5 font-bold text-c-accent-ink disabled:opacity-60">{creatingEstimate ? 'Calculating...' : 'Get my estimate'}</button></div></footer>
