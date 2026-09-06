@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ItemRow } from '@/components/ItemRow';
 import { SimilarItemPicker } from '@/components/SimilarItemPicker';
-import { formatLabel } from '@/lib/format';
+import { formatLabel, roomTitle } from '@/lib/format';
 import { asQuotaError, type QuotaError } from '@/lib/quota-error';
 import type { Item, Room, SessionDetails } from '@/lib/types';
 
@@ -19,6 +19,7 @@ export default function ReviewPage() {
   const [pickerRoom, setPickerRoom] = useState<Room>();
   const [creatingEstimate, setCreatingEstimate] = useState(false);
   const [quotaBlock, setQuotaBlock] = useState<QuotaError | null>(null);
+  const [photos, setPhotos] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     async function load() {
@@ -34,6 +35,21 @@ export default function ReviewPage() {
       }
     }
     void load();
+  }, [sessionId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPhotos() {
+      try {
+        const response = await fetch(`/api/session/${sessionId}/photos`);
+        const data = await response.json() as { photos?: Record<string, string[]> };
+        if (!cancelled && data.photos) setPhotos(data.photos);
+      } catch {
+        // Non-critical — the review still works without the reference photos.
+      }
+    }
+    void loadPhotos();
+    return () => { cancelled = true; };
   }, [sessionId]);
 
   function replaceItem(nextItem: Item) {
@@ -201,17 +217,65 @@ export default function ReviewPage() {
           <div className="mt-3 space-y-3">{uncertain.map(({ item }) => <div key={item.id} className="rounded-2xl border border-c-waiting/20 bg-c-waiting/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-u-ink">{formatLabel(item.name)}</p><p className="mt-1 text-sm text-u-ink-2"><span className="font-mono tabular-nums">{Math.round(item.confidence * 100)}%</span> confidence</p>{item.uncertaintyReason && <p className="mt-0.5 text-xs text-u-ink-3">{item.uncertaintyReason}</p>}</div><button type="button" disabled={busyItemId === item.id || Boolean(quotaBlock)} onClick={() => void refine(item)} className="min-h-11 rounded-xl bg-c-waiting px-3 text-sm font-bold text-c-accent-ink disabled:opacity-50">{busyItemId === item.id ? 'Checking...' : 'Check this'}</button></div></div>)}</div></section>}
         <section className="mt-8 space-y-5">{session.rooms.map((room) => {
           const confirmedItems = room.items.filter((item) => !uncertainIds.has(item.id));
-          const roomCubicFeet = confirmedItems.reduce((total, item) => total + item.cubicFeet * item.count, 0);
-          const roomLabel = formatLabel(room.roomType);
-          const addButton = <button type="button" onClick={() => setPickerRoom(room)} className="min-h-11 text-sm font-bold text-c-accent">Add item</button>;
+          const roomCuft = confirmedItems.reduce((total, item) => total + item.cubicFeet * item.count, 0);
+          const roomLabel = roomTitle(session.rooms, room);
+          const roomPhotos = photos[room.id] ?? [];
+          const photoStrip = roomPhotos.length > 0 ? (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+              {roomPhotos.map((url, index) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={url} src={url} alt={`${roomLabel} photo ${index + 1}`} className="h-28 w-28 shrink-0 rounded-xl object-cover" />
+              ))}
+            </div>
+          ) : null;
 
           if (!confirmedItems.length) {
-            return <div key={room.id} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm"><div className="flex items-center justify-between gap-3"><div><h2 className="font-bold text-u-ink">{roomLabel}</h2><p className="mt-1 text-sm text-u-ink-2">All items for this room are shown above for review.</p></div>{addButton}</div></div>;
+            return (
+              <div key={room.id} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm">
+                <h2 className="font-bold text-u-ink">{roomLabel}</h2>
+                {photoStrip}
+                <p className="mt-2 text-sm text-u-ink-2">All items for this room are shown above for review.</p>
+              </div>
+            );
           }
 
-          return <details key={room.id} open={session.rooms.length === 1} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm"><summary className="cursor-pointer font-black text-u-ink">{roomLabel} · <span className="font-mono tabular-nums">{confirmedItems.length}</span> confirmed item{confirmedItems.length === 1 ? '' : 's'} · <span className="font-mono tabular-nums">{Math.round(roomCubicFeet * 10) / 10}</span> cu ft</summary><div className="mt-4"><div className="space-y-3">{confirmedItems.map((item) => <ItemRow key={item.id} item={item} busy={busyItemId === item.id} onChange={(patch) => void updateItem(item, patch)} onRemove={() => void deleteItem(item)} />)}</div><div className="mt-3 flex justify-end">{addButton}</div></div></details>;
+          return (
+            <details key={room.id} open={session.rooms.length === 1} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm">
+              <summary className="cursor-pointer font-black text-u-ink">{roomLabel} · <span className="font-mono tabular-nums">{confirmedItems.length}</span> confirmed item{confirmedItems.length === 1 ? '' : 's'} · <span className="font-mono tabular-nums">{Math.round(roomCuft * 10) / 10}</span> cu ft</summary>
+              <div className="mt-4">
+                {photoStrip}
+                {roomPhotos.length > 0 && <p className="mb-3 mt-1 text-xs text-u-ink-3">Your photos of this room — tally the items below against them.</p>}
+                <div className="space-y-3">{confirmedItems.map((item) => <ItemRow key={item.id} item={item} busy={busyItemId === item.id} onChange={(patch) => void updateItem(item, patch)} onRemove={() => void deleteItem(item)} />)}</div>
+              </div>
+            </details>
+          );
         })}</section>
-        {pickerRoom && <div className="mt-6"><SimilarItemPicker roomType={pickerRoom.roomType} onPick={addItem} onCancel={() => setPickerRoom(undefined)} /></div>}
+
+        <section className="mt-6 rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm">
+          <h2 className="font-black text-u-ink">Missed something?</h2>
+          {pickerRoom ? (
+            <div className="mt-3">
+              <p className="mb-2 text-sm font-semibold text-u-ink">Adding to {roomTitle(session.rooms, pickerRoom)}</p>
+              <SimilarItemPicker roomType={pickerRoom.roomType} onPick={addItem} onCancel={() => setPickerRoom(undefined)} />
+            </div>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-u-ink-2">Add an item to any room.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {session.rooms.map((room) => (
+                  <button
+                    key={room.id}
+                    type="button"
+                    onClick={() => setPickerRoom(room)}
+                    className="min-h-10 rounded-xl border border-u-border px-3 text-sm font-bold text-u-ink-2 transition hover:border-c-accent hover:text-c-accent"
+                  >
+                    {session.rooms.length === 1 ? 'Add an item' : `Add to ${roomTitle(session.rooms, room)}`}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
         <footer className="sticky bottom-0 mt-8 border-t border-u-border bg-u-bg/95 py-4 backdrop-blur"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold text-u-ink-3">Total volume</p><p className="text-xl font-black text-u-ink"><span className="font-mono tabular-nums">{Math.round(totalCubicFeet * 10) / 10}</span> cu ft</p></div><button type="button" onClick={() => void getEstimate()} disabled={creatingEstimate} className="min-h-12 rounded-2xl bg-c-accent px-5 font-bold text-c-accent-ink disabled:opacity-60">{creatingEstimate ? 'Calculating...' : 'Get my estimate'}</button></div></footer>
       </div>
     </main>

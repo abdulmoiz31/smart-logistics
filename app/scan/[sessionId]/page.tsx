@@ -7,7 +7,7 @@ import { AccessFlags } from '@/components/AccessFlags';
 import { SimilarItemPicker } from '@/components/SimilarItemPicker';
 import { SaveScanCard } from '@/components/SaveScanCard';
 import { downscaleImage } from '@/lib/image';
-import { formatLabel } from '@/lib/format';
+import { roomNumber, roomTitle } from '@/lib/format';
 import { asQuotaError, type QuotaError } from '@/lib/quota-error';
 import type { QuotaStatus } from '@/lib/rate-limit';
 import type { AccessFlag, Item, Room, RoomType, SessionDetails } from '@/lib/types';
@@ -50,15 +50,6 @@ function quotaRemainingText(status: QuotaStatus | null): string {
 
 function roomCubicFeet(room: Room): number {
   return Math.round(room.items.reduce((total, item) => total + item.cubicFeet * item.count, 0) * 10) / 10;
-}
-
-function roomNumber(rooms: Room[], roomId: string): number {
-  return rooms.findIndex((room) => room.id === roomId) + 1;
-}
-
-function roomTitle(rooms: Room[], room: Room): string {
-  const label = `Room ${roomNumber(rooms, room.id)}`;
-  return room.roomType === 'other' ? label : `${label} · ${formatLabel(room.roomType)}`;
 }
 
 export default function ScanPage() {

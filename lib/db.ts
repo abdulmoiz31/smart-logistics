@@ -187,6 +187,29 @@ export async function getCaptureSignedUrls(roomId: string): Promise<string[]> {
   return signed.map((entry) => entry.signedUrl).filter((url): url is string => Boolean(url));
 }
 
+/** Signed capture URLs for every room in a session, keyed by room id. One sign call. */
+export async function getSessionCaptureUrls(sessionId: string): Promise<Record<string, string[]>> {
+  const rooms = await getSessionRooms(sessionId);
+  const allPaths = rooms.flatMap((room) => room.capturePaths ?? []);
+  if (!allPaths.length) return {};
+
+  const { data: signed, error } = await db().storage.from('captures').createSignedUrls(allPaths, 60 * 60);
+  if (error) throw new Error(`getSessionCaptureUrls failed: ${error.message}`);
+
+  const urlByPath = new Map<string, string>();
+  for (const entry of signed ?? []) {
+    if (entry.path && entry.signedUrl) urlByPath.set(entry.path, entry.signedUrl);
+  }
+
+  const result: Record<string, string[]> = {};
+  for (const room of rooms) {
+    result[room.id] = (room.capturePaths ?? [])
+      .map((path) => urlByPath.get(path))
+      .filter((url): url is string => Boolean(url));
+  }
+  return result;
+}
+
 export async function replaceItems(roomId: string, items: ItemInput[]): Promise<Item[]> {
   const client = db();
   const { error: deleteError } = await client.from('items').delete().eq('room_id', roomId);
