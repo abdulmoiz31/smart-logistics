@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getCaptureSignedUrls, getSession, getSessionOwner } from '@/lib/db';
-import { formatLabel } from '@/lib/format';
+import { formatLabel, roomTitle } from '@/lib/format';
 import { requireUser } from '@/lib/require-user';
 import { isUuid } from '@/lib/validation';
 
@@ -18,12 +18,16 @@ export default async function ScanDetailPage({ params }: { params: Promise<{ ses
   const session = await getSession(sessionId);
   if (!session) notFound();
 
-  const rooms = await Promise.all(
-    session.rooms.map(async (room) => ({ room, photoUrls: await getCaptureSignedUrls(room.id) })),
+  // Skip rooms that were added but never scanned (no items, no photos).
+  const realRooms = session.rooms.filter(
+    (room) => room.items.length > 0 || (room.capturePaths?.length ?? 0) > 0,
   );
-  const totalItems = session.rooms.reduce((count, room) => count + room.items.reduce((n, i) => n + i.count, 0), 0);
+  const rooms = await Promise.all(
+    realRooms.map(async (room) => ({ room, photoUrls: await getCaptureSignedUrls(room.id) })),
+  );
+  const totalItems = realRooms.reduce((count, room) => count + room.items.reduce((n, i) => n + i.count, 0), 0);
   const totalCubicFeet = Math.round(
-    session.rooms.reduce((total, room) => total + room.items.reduce((n, i) => n + i.cubicFeet * i.count, 0), 0) * 10,
+    realRooms.reduce((total, room) => total + room.items.reduce((n, i) => n + i.cubicFeet * i.count, 0), 0) * 10,
   ) / 10;
   const hasItems = totalItems > 0;
 
@@ -37,7 +41,7 @@ export default async function ScanDetailPage({ params }: { params: Promise<{ ses
 
         <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">{session.label ?? 'Saved scan'}</h1>
         <p className="mt-2 text-u-ink-2">
-          <span className="font-mono tabular-nums">{session.rooms.length}</span> room{session.rooms.length === 1 ? '' : 's'}
+          <span className="font-mono tabular-nums">{realRooms.length}</span> room{realRooms.length === 1 ? '' : 's'}
           {' · '}<span className="font-mono tabular-nums">{totalItems}</span> item{totalItems === 1 ? '' : 's'}
           {totalCubicFeet > 0 && <> {' · '}<span className="font-mono tabular-nums">{totalCubicFeet}</span> cu ft</>}
         </p>
@@ -56,13 +60,13 @@ export default async function ScanDetailPage({ params }: { params: Promise<{ ses
         <div className="mt-8 space-y-6">
           {rooms.map(({ room, photoUrls }) => (
             <section key={room.id} className="rounded-2xl border border-u-border bg-u-panel p-5 shadow-sm">
-              <h2 className="font-black text-u-ink">{formatLabel(room.roomType)}</h2>
+              <h2 className="font-black text-u-ink">{roomTitle(realRooms, room)}</h2>
 
               {photoUrls.length > 0 && (
                 <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
                   {photoUrls.map((url, index) => (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img key={url} src={url} alt={`${formatLabel(room.roomType)} photo ${index + 1}`} className="h-24 w-24 shrink-0 rounded-xl object-cover" />
+                    <img key={url} src={url} alt={`${roomTitle(realRooms, room)} photo ${index + 1}`} className="h-24 w-24 shrink-0 rounded-xl object-cover" />
                   ))}
                 </div>
               )}

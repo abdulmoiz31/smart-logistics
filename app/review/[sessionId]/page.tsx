@@ -148,9 +148,15 @@ export default function ReviewPage() {
     }
   }
 
-  const entries = useMemo(
-    () => session?.rooms.flatMap((room) => room.items.map((item) => ({ room, item }))) ?? [],
+  // Rooms the customer actually scanned. A room that was added ("Add another
+  // room") but never photographed has no items and should not appear here.
+  const rooms = useMemo(
+    () => session?.rooms.filter((room) => room.items.length > 0) ?? [],
     [session],
+  );
+  const entries = useMemo(
+    () => rooms.flatMap((room) => room.items.map((item) => ({ room, item }))),
+    [rooms],
   );
   const uncertain = entries.filter(({ item }) => item.confidence < 0.7 || item.ambiguousBetween?.length);
   const uncertainIds = new Set(uncertain.map(({ item }) => item.id));
@@ -215,10 +221,10 @@ export default function ReviewPage() {
             </div>
           )}
           <div className="mt-3 space-y-3">{uncertain.map(({ item }) => <div key={item.id} className="rounded-2xl border border-c-waiting/20 bg-c-waiting/10 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-semibold text-u-ink">{formatLabel(item.name)}</p><p className="mt-1 text-sm text-u-ink-2"><span className="font-mono tabular-nums">{Math.round(item.confidence * 100)}%</span> confidence</p>{item.uncertaintyReason && <p className="mt-0.5 text-xs text-u-ink-3">{item.uncertaintyReason}</p>}</div><button type="button" disabled={busyItemId === item.id || Boolean(quotaBlock)} onClick={() => void refine(item)} className="min-h-11 rounded-xl bg-c-waiting px-3 text-sm font-bold text-c-accent-ink disabled:opacity-50">{busyItemId === item.id ? 'Checking...' : 'Check this'}</button></div></div>)}</div></section>}
-        <section className="mt-8 space-y-5">{session.rooms.map((room) => {
+        <section className="mt-8 space-y-5">{rooms.map((room) => {
           const confirmedItems = room.items.filter((item) => !uncertainIds.has(item.id));
           const roomCuft = confirmedItems.reduce((total, item) => total + item.cubicFeet * item.count, 0);
-          const roomLabel = roomTitle(session.rooms, room);
+          const roomLabel = roomTitle(rooms, room);
           const roomPhotos = photos[room.id] ?? [];
           const photoStrip = roomPhotos.length > 0 ? (
             <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -240,7 +246,7 @@ export default function ReviewPage() {
           }
 
           return (
-            <details key={room.id} open={session.rooms.length === 1} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm">
+            <details key={room.id} open={rooms.length === 1} className="rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm">
               <summary className="cursor-pointer font-black text-u-ink">{roomLabel} · <span className="font-mono tabular-nums">{confirmedItems.length}</span> confirmed item{confirmedItems.length === 1 ? '' : 's'} · <span className="font-mono tabular-nums">{Math.round(roomCuft * 10) / 10}</span> cu ft</summary>
               <div className="mt-4">
                 {photoStrip}
@@ -255,21 +261,21 @@ export default function ReviewPage() {
           <h2 className="font-black text-u-ink">Missed something?</h2>
           {pickerRoom ? (
             <div className="mt-3">
-              <p className="mb-2 text-sm font-semibold text-u-ink">Adding to {roomTitle(session.rooms, pickerRoom)}</p>
+              <p className="mb-2 text-sm font-semibold text-u-ink">Adding to {roomTitle(rooms, pickerRoom)}</p>
               <SimilarItemPicker roomType={pickerRoom.roomType} onPick={addItem} onCancel={() => setPickerRoom(undefined)} />
             </div>
           ) : (
             <>
               <p className="mt-1 text-sm text-u-ink-2">Add an item to any room.</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {session.rooms.map((room) => (
+                {rooms.map((room) => (
                   <button
                     key={room.id}
                     type="button"
                     onClick={() => setPickerRoom(room)}
                     className="min-h-10 rounded-xl border border-u-border px-3 text-sm font-bold text-u-ink-2 transition hover:border-c-accent hover:text-c-accent"
                   >
-                    {session.rooms.length === 1 ? 'Add an item' : `Add to ${roomTitle(session.rooms, room)}`}
+                    {rooms.length === 1 ? 'Add an item' : `Add to ${roomTitle(rooms, room)}`}
                   </button>
                 ))}
               </div>

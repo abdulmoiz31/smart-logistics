@@ -140,10 +140,19 @@ export default function ScanPage() {
   const openRoom = useCallback((room: Room) => {
     if (room.id === activeRoomId || analysing) return;
     if (photos.length > 0 && !window.confirm('Photos added to the current room haven’t been analysed yet. Switch rooms and discard them?')) return;
+
+    // Drop the room we're leaving if it was added but never scanned.
+    const leavingId = activeRoomId;
+    const leaving = leavingId ? rooms.find((entry) => entry.id === leavingId) : undefined;
+    if (leaving && leaving.items.length === 0) {
+      setRooms((current) => current.filter((entry) => entry.id !== leavingId));
+      void fetch(`/api/room/${leavingId}`, { method: 'DELETE' }).catch(() => {});
+    }
+
     beginEditing(room);
     setLastAnalysedRoomId(null);
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [activeRoomId, analysing, photos.length, beginEditing]);
+  }, [activeRoomId, analysing, photos.length, rooms, beginEditing]);
 
   const createRoom = useCallback(async () => {
     if (creatingRoomRef.current) return;
@@ -166,6 +175,18 @@ export default function ScanPage() {
       creatingRoomRef.current = false;
     }
   }, [sessionId, beginEditing]);
+
+  const addAnotherRoom = useCallback(() => {
+    // Reuse a room that was added but never scanned instead of stacking empties.
+    const existingEmpty = rooms.find((room) => room.items.length === 0);
+    if (existingEmpty) {
+      setLastAnalysedRoomId(null);
+      beginEditing(existingEmpty);
+      if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    void createRoom();
+  }, [rooms, beginEditing, createRoom]);
 
   useEffect(() => {
     let cancelled = false;
@@ -428,7 +449,7 @@ export default function ScanPage() {
               : <h2 className="font-bold text-c-fresh"><span className="font-mono tabular-nums">{completedRooms.length}</span> room{completedRooms.length === 1 ? '' : 's'} · <span className="font-mono tabular-nums">{totalItems}</span> item{totalItems === 1 ? '' : 's'} scanned.</h2>}
             <p className="mt-1 text-sm text-u-ink-2">Add another room, or review everything before your estimate.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <button type="button" onClick={() => void createRoom()} className="min-h-11 rounded-xl border border-c-fresh/30 bg-u-panel font-semibold text-c-fresh">Add another room</button>
+              <button type="button" onClick={addAnotherRoom} className="min-h-11 rounded-xl border border-c-fresh/30 bg-u-panel font-semibold text-c-fresh">Add another room</button>
               <Link href={`/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-fresh font-semibold text-c-accent-ink">Review my inventory</Link>
             </div>
           </section>

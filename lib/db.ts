@@ -134,6 +134,23 @@ export async function updateRoomType(roomId: string, roomType: RoomType): Promis
   if (error) throw new Error(`updateRoomType failed: ${error.message}`);
 }
 
+/**
+ * Delete a room only if it has no items and no captures — i.e. one that was
+ * added ("Add another room") but never scanned. Returns false, without
+ * touching anything, for a room that has real content.
+ */
+export async function deleteEmptyRoom(roomId: string): Promise<boolean> {
+  const client = db();
+  const [items, captures] = await Promise.all([
+    client.from('items').select('id', { count: 'exact', head: true }).eq('room_id', roomId),
+    client.from('captures').select('id', { count: 'exact', head: true }).eq('room_id', roomId),
+  ]);
+  if ((items.count ?? 0) > 0 || (captures.count ?? 0) > 0) return false;
+  const { error } = await client.from('rooms').delete().eq('id', roomId);
+  if (error) throw new Error(`deleteEmptyRoom failed: ${error.message}`);
+  return true;
+}
+
 export async function saveCapture(roomId: string, file: Buffer, mimeType: string): Promise<string> {
   const extension = mimeType === 'image/png' ? 'png' : 'jpg';
   const storagePath = `${roomId}/${crypto.randomUUID()}.${extension}`;
@@ -514,8 +531,15 @@ export async function listUserSessions(userId: string): Promise<UserScanSummary[
     client.from('quotes').select('session_id').in('session_id', sessionIds).then((response) => response.data ?? []),
   ]);
 
+  // A room the customer added but never scanned (no items, no photos) is not
+  // a real room — don't count it.
+  const roomHasContent = new Set<string>();
+  for (const item of itemRows as Row[]) roomHasContent.add(String(item.room_id));
+  for (const capture of captureRows as Row[]) roomHasContent.add(String(capture.room_id));
+
   const rollup = new Map(sessionIds.map((id) => [id, { rooms: 0, items: 0, cuft: 0, photos: 0 }]));
   for (const room of rooms) {
+    if (!roomHasContent.has(String(room.id))) continue;
     rollup.get(String(room.session_id))!.rooms += 1;
   }
   for (const item of itemRows as Row[]) {
