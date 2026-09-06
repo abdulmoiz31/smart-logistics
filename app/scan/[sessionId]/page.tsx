@@ -52,6 +52,15 @@ function roomCubicFeet(room: Room): number {
   return Math.round(room.items.reduce((total, item) => total + item.cubicFeet * item.count, 0) * 10) / 10;
 }
 
+function roomNumber(rooms: Room[], roomId: string): number {
+  return rooms.findIndex((room) => room.id === roomId) + 1;
+}
+
+function roomTitle(rooms: Room[], room: Room): string {
+  const label = `Room ${roomNumber(rooms, room.id)}`;
+  return room.roomType === 'other' ? label : `${label} · ${formatLabel(room.roomType)}`;
+}
+
 export default function ScanPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
 
@@ -124,15 +133,26 @@ export default function ScanPage() {
   }, [analysing, reducedMotion]);
 
   const beginEditing = useCallback((room: Room) => {
+    setPhotos((current) => {
+      current.forEach((photo) => URL.revokeObjectURL(photo.preview));
+      return [];
+    });
     setActiveRoomId(room.id);
     setRoomType(room.roomType);
     setAccessFlags(room.accessFlags);
-    setPhotos([]);
     setPickerOpen(false);
     setDemoMode(false);
     setDegraded(false);
     setError('');
   }, []);
+
+  const openRoom = useCallback((room: Room) => {
+    if (room.id === activeRoomId || analysing) return;
+    if (photos.length > 0 && !window.confirm('Photos added to the current room haven’t been analysed yet. Switch rooms and discard them?')) return;
+    beginEditing(room);
+    setLastAnalysedRoomId(null);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeRoomId, analysing, photos.length, beginEditing]);
 
   const createRoom = useCallback(async () => {
     if (creatingRoomRef.current) return;
@@ -271,6 +291,26 @@ export default function ScanPage() {
     }
   }
 
+  async function saveRoomDetails() {
+    if (!activeRoom) return;
+    const roomId = activeRoom.id;
+    setError('');
+    try {
+      const response = await fetch(`/api/room/${roomId}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ roomType, accessFlags }),
+      });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? 'Unable to save this room.');
+      patchRoom(roomId, { roomType, accessFlags });
+      setActiveRoomId(null);
+      setLastAnalysedRoomId(null);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to save this room.');
+    }
+  }
+
   async function addItem(category: string, sizeClass: 's' | 'm' | 'l') {
     if (!activeRoom) return;
     const response = await fetch('/api/item', {
@@ -302,27 +342,30 @@ export default function ScanPage() {
             <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-c-accent">
               Rooms scanned <span className="font-mono tabular-nums">({completedRooms.length})</span>
             </h2>
+            <p className="mt-1 text-sm text-u-ink-3">Tap a room to add photos or change its details.</p>
             <div className="mt-3 space-y-2">
-              {completedRooms.map((room) => (
-                <div key={room.id} className="flex items-center justify-between gap-3 rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm">
-                  <div className="min-w-0">
-                    <p className="font-bold text-u-ink">{formatLabel(room.roomType)}</p>
-                    <p className="mt-0.5 text-sm text-u-ink-2">
-                      <span className="font-mono tabular-nums">{room.items.reduce((n, i) => n + i.count, 0)}</span> item{room.items.reduce((n, i) => n + i.count, 0) === 1 ? '' : 's'}
-                      {' · '}
-                      <span className="font-mono tabular-nums">{roomCubicFeet(room)}</span> cu ft
-                    </p>
-                  </div>
+              {completedRooms.map((room) => {
+                const count = room.items.reduce((n, i) => n + i.count, 0);
+                return (
                   <button
+                    key={room.id}
                     type="button"
-                    onClick={() => beginEditing(room)}
-                    disabled={analysing || Boolean(activeRoomId)}
-                    className="shrink-0 min-h-9 rounded-xl border border-u-border px-3 text-sm font-bold text-u-ink-2 transition hover:border-c-accent hover:text-c-accent disabled:opacity-40"
+                    onClick={() => openRoom(room)}
+                    disabled={analysing}
+                    className="flex w-full items-center justify-between gap-3 rounded-2xl border border-u-border bg-u-panel p-4 text-left shadow-sm transition hover:border-c-accent disabled:opacity-40"
                   >
-                    Re-scan
+                    <div className="min-w-0">
+                      <p className="font-bold text-u-ink">{roomTitle(rooms, room)}</p>
+                      <p className="mt-0.5 text-sm text-u-ink-2">
+                        <span className="font-mono tabular-nums">{count}</span> item{count === 1 ? '' : 's'}
+                        {' · '}
+                        <span className="font-mono tabular-nums">{roomCubicFeet(room)}</span> cu ft
+                      </p>
+                    </div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="size-5 shrink-0 text-u-ink-3" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
                   </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
@@ -330,9 +373,9 @@ export default function ScanPage() {
         {activeRoom && (
           <section className="mt-6 rounded-3xl border border-u-border bg-u-panel p-5 shadow-sm sm:p-7">
             <p className="text-sm font-bold uppercase tracking-[0.14em] text-c-accent">
-              {completedRooms.length > 0 ? `Room ${rooms.length}` : 'Room 1'}
+              Room <span className="font-mono tabular-nums">{roomNumber(rooms, activeRoom.id)}</span>{activeItems.length > 0 ? ' · editing' : ''}
             </p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Show us this room.</h1>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">{activeItems.length > 0 ? 'Update this room.' : 'Show us this room.'}</h1>
             <p className="mt-2 text-u-ink-2">Take a few wide photos from different angles. We&apos;ll avoid counting the same thing twice.</p>
             <label className="mt-6 block text-sm font-semibold text-u-ink">What kind of room is this?
               <select value={roomType} onChange={(event) => setRoomType(event.target.value as RoomType)} className="mt-2 min-h-11 w-full rounded-xl border border-u-border bg-u-bg px-3 text-u-ink">
@@ -366,8 +409,17 @@ export default function ScanPage() {
               </div>
             )}
             <button type="button" disabled={!photos.length || analysing || Boolean(quotaBlock)} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-c-accent px-5 font-bold text-c-accent-ink transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-u-border disabled:text-u-ink-3">
-              {analysing ? (reducedMotion ? REDUCED_MOTION_STAGE : analysisStages[analysisStage]) : 'Analyse this room'}
+              {analysing
+                ? (reducedMotion ? REDUCED_MOTION_STAGE : analysisStages[analysisStage])
+                : photos.length === 0 && activeItems.length > 0 ? 'Add photos to re-analyse this room' : 'Analyse this room'}
             </button>
+
+            {activeItems.length > 0 && !analysing && photos.length === 0 && (
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button type="button" onClick={() => { setActiveRoomId(null); setLastAnalysedRoomId(null); }} className="min-h-11 rounded-xl border border-u-border font-semibold text-u-ink-2 transition hover:border-c-accent hover:text-c-accent">Done</button>
+                <button type="button" onClick={() => void saveRoomDetails()} className="min-h-11 rounded-xl bg-c-accent font-bold text-c-accent-ink transition hover:opacity-90">Save room details</button>
+              </div>
+            )}
 
             {activeItems.length === 0 && !analysing && (
               <div className="mt-4">
@@ -381,7 +433,7 @@ export default function ScanPage() {
         {!activeRoom && (
           <section className="mt-6 rounded-3xl border border-c-fresh/20 bg-c-fresh/10 p-5">
             {lastAnalysedRoom
-              ? <h2 className="font-bold text-c-fresh">We found <span className="font-mono tabular-nums">{lastAnalysedRoom.items.reduce((n, i) => n + i.count, 0)}</span> item{lastAnalysedRoom.items.reduce((n, i) => n + i.count, 0) === 1 ? '' : 's'} in {formatLabel(lastAnalysedRoom.roomType)}.</h2>
+              ? <h2 className="font-bold text-c-fresh">We found <span className="font-mono tabular-nums">{lastAnalysedRoom.items.reduce((n, i) => n + i.count, 0)}</span> item{lastAnalysedRoom.items.reduce((n, i) => n + i.count, 0) === 1 ? '' : 's'} in {roomTitle(rooms, lastAnalysedRoom)}.</h2>
               : <h2 className="font-bold text-c-fresh"><span className="font-mono tabular-nums">{completedRooms.length}</span> room{completedRooms.length === 1 ? '' : 's'} · <span className="font-mono tabular-nums">{totalItems}</span> item{totalItems === 1 ? '' : 's'} scanned.</h2>}
             <p className="mt-1 text-sm text-u-ink-2">Add another room, or review everything before your estimate.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
