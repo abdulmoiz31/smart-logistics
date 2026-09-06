@@ -5,6 +5,7 @@ create table sessions (
   customer_email text,
   user_id uuid,
   device_id text,
+  label text,
   status text not null default 'scanning'
     check (status in ('scanning', 'reviewing', 'pending_review', 'confirmed')),
   created_at timestamptz not null default now()

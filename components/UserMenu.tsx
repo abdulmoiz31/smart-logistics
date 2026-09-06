@@ -46,9 +46,25 @@ export function UserMenu({ email }: { email: string }) {
           <div className="truncate border-b border-u-border px-4 py-3 text-sm text-u-ink-3">{email}</div>
           <Link
             role="menuitem"
-            href="/profile"
+            href="/scans"
             onClick={() => setOpen(false)}
             className="block px-4 py-2.5 text-sm font-semibold text-u-ink transition hover:bg-u-bg"
+          >
+            My scans
+          </Link>
+          <Link
+            role="menuitem"
+            href="/requests"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2.5 text-sm font-semibold text-u-ink transition hover:bg-u-bg"
+          >
+            My requests
+          </Link>
+          <Link
+            role="menuitem"
+            href="/profile"
+            onClick={() => setOpen(false)}
+            className="block border-t border-u-border px-4 py-2.5 text-sm font-semibold text-u-ink transition hover:bg-u-bg"
           >
             Profile
           </Link>

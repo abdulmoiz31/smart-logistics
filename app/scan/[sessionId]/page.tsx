@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { AccessFlags } from '@/components/AccessFlags';
 import { SimilarItemPicker } from '@/components/SimilarItemPicker';
+import { SaveScanCard } from '@/components/SaveScanCard';
 import { downscaleImage } from '@/lib/image';
+import { formatLabel } from '@/lib/format';
 import { asQuotaError, type QuotaError } from '@/lib/quota-error';
 import type { QuotaStatus } from '@/lib/rate-limit';
 import type { AccessFlag, Item, Room, RoomType, SessionDetails } from '@/lib/types';
@@ -46,13 +48,22 @@ function quotaRemainingText(status: QuotaStatus | null): string {
   return `${status.remaining} ${label} remaining today · choose from your camera or photo library`;
 }
 
+function roomCubicFeet(room: Room): number {
+  return Math.round(room.items.reduce((total, item) => total + item.cubicFeet * item.count, 0) * 10) / 10;
+}
+
 export default function ScanPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const [room, setRoom] = useState<Room>();
+
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+  const [sessionLabel, setSessionLabel] = useState<string | null>(null);
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+
   const [roomType, setRoomType] = useState<RoomType>('other');
   const [accessFlags, setAccessFlags] = useState<AccessFlag[]>([]);
   const [photos, setPhotos] = useState<LocalPhoto[]>([]);
-  const [items, setItems] = useState<Item[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [analysing, setAnalysing] = useState(false);
   const [analysisStage, setAnalysisStage] = useState(0);
@@ -63,8 +74,19 @@ export default function ScanPage() {
   const [quotaBlock, setQuotaBlock] = useState<QuotaError | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
   const [quotaStatus, setQuotaStatus] = useState<QuotaStatus | null>(null);
+  const [lastAnalysedRoomId, setLastAnalysedRoomId] = useState<string | null>(null);
 
   const creatingRoomRef = useRef(false);
+
+  const activeRoom = rooms.find((room) => room.id === activeRoomId) ?? null;
+  const completedRooms = rooms.filter((room) => room.items.length > 0 && room.id !== activeRoomId);
+  const activeItems = activeRoom?.items ?? [];
+  const totalItems = rooms.reduce((count, room) => count + room.items.length, 0);
+  const lastAnalysedRoom = rooms.find((room) => room.id === lastAnalysedRoomId) ?? null;
+
+  const patchRoom = useCallback((roomId: string, patch: Partial<Room>) => {
+    setRooms((current) => current.map((room) => (room.id === roomId ? { ...room, ...patch } : room)));
+  }, []);
 
   const refreshQuota = useCallback(async () => {
     try {
@@ -95,43 +117,44 @@ export default function ScanPage() {
       if (!analysing) setAnalysisStage(0);
       return;
     }
-
     const timer = window.setInterval(() => {
       setAnalysisStage((stage) => (stage + 1) % analysisStages.length);
     }, 2_500);
     return () => window.clearInterval(timer);
   }, [analysing, reducedMotion]);
 
+  const beginEditing = useCallback((room: Room) => {
+    setActiveRoomId(room.id);
+    setRoomType(room.roomType);
+    setAccessFlags(room.accessFlags);
+    setPhotos([]);
+    setPickerOpen(false);
+    setDemoMode(false);
+    setDegraded(false);
+    setError('');
+  }, []);
+
   const createRoom = useCallback(async () => {
     if (creatingRoomRef.current) return;
     creatingRoomRef.current = true;
     try {
-    const response = await fetch('/api/room', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sessionId, roomType: 'other' }),
-    });
-    const data = await response.json() as { roomId?: string; error?: string };
-    if (!response.ok || !data.roomId) throw new Error(data.error ?? 'Unable to add a room.');
-    const nextRoom: Room = {
-      id: data.roomId,
-      sessionId,
-      roomType: 'other',
-      accessFlags: [],
-      items: [],
-    };
-    setRoom(nextRoom);
-    setRoomType('other');
-    setAccessFlags([]);
-    setPhotos([]);
-    setItems([]);
-    setDemoMode(false);
-    setDegraded(false);
-    setPickerOpen(false);
+      const response = await fetch('/api/room', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sessionId, roomType: 'other' }),
+      });
+      const data = await response.json() as { roomId?: string; error?: string };
+      if (!response.ok || !data.roomId) throw new Error(data.error ?? 'Unable to add a room.');
+      const nextRoom: Room = { id: data.roomId, sessionId, roomType: 'other', accessFlags: [], items: [] };
+      setRooms((current) => [...current, nextRoom]);
+      setLastAnalysedRoomId(null);
+      beginEditing(nextRoom);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Unable to add a room.');
     } finally {
       creatingRoomRef.current = false;
     }
-  }, [sessionId]);
+  }, [sessionId, beginEditing]);
 
   useEffect(() => {
     let cancelled = false;
@@ -140,15 +163,18 @@ export default function ScanPage() {
         const response = await fetch(`/api/session/${sessionId}`);
         const data = await response.json() as { session?: SessionDetails; error?: string };
         if (!response.ok || !data.session) throw new Error(data.error ?? 'Unable to load your scan.');
-        const existing = data.session.rooms.at(-1);
         if (cancelled) return;
-        if (existing) {
-          setRoom(existing);
-          setRoomType(existing.roomType);
-          setAccessFlags(existing.accessFlags);
-          setItems(existing.items);
-        } else {
+        setRooms(data.session.rooms);
+        setSessionLabel(data.session.label ?? null);
+        setSessionUserId(data.session.userId ?? null);
+
+        const unfinished = data.session.rooms.find((room) => room.items.length === 0);
+        if (unfinished) {
+          beginEditing(unfinished);
+        } else if (data.session.rooms.length === 0) {
           await createRoom();
+        } else {
+          setActiveRoomId(null);
         }
       } catch (cause) {
         if (!cancelled) setError(cause instanceof Error ? cause.message : 'Unable to load your scan.');
@@ -158,7 +184,7 @@ export default function ScanPage() {
     }
     void load();
     return () => { cancelled = true; };
-  }, [sessionId, createRoom]);
+  }, [sessionId, createRoom, beginEditing]);
 
   async function addPhotos(event: ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(event.target.files ?? []);
@@ -199,13 +225,14 @@ export default function ScanPage() {
   }
 
   async function analyse() {
-    if (!room || !photos.length) return;
-    if (items.length > 0 && !window.confirm('Re-analysing replaces the changes you made to this room. Continue?')) return;
+    if (!activeRoom || !photos.length) return;
+    if (activeItems.length > 0 && !window.confirm('Re-analysing replaces the changes you made to this room. Continue?')) return;
+    const roomId = activeRoom.id;
     setAnalysing(true);
     setAnalysisStage(0);
     setError('');
     try {
-      const roomResponse = await fetch(`/api/room/${room.id}`, {
+      const roomResponse = await fetch(`/api/room/${roomId}`, {
         method: 'PATCH',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ roomType, accessFlags }),
@@ -215,7 +242,7 @@ export default function ScanPage() {
 
       setAnalysisStage(1);
       const formData = new FormData();
-      formData.append('roomId', room.id);
+      formData.append('roomId', roomId);
       formData.append('roomType', roomType);
       photos.forEach((photo) => formData.append('files', photo.file));
       const response = await fetch('/api/analyze', { method: 'POST', body: formData });
@@ -228,11 +255,14 @@ export default function ScanPage() {
         return;
       }
       if (!response.ok || !data.items || !data.roomType) throw new Error(data.error ?? 'Unable to analyse this room.');
-      setItems(data.items);
-      setRoom((current) => current ? { ...current, roomType: data.roomType!, accessFlags, items: data.items! } : current);
-      setRoomType(data.roomType);
+
+      patchRoom(roomId, { items: data.items, roomType: data.roomType, accessFlags });
+      photos.forEach((photo) => URL.revokeObjectURL(photo.preview));
+      setPhotos([]);
       setDemoMode(Boolean(data.demoMode));
       setDegraded(Boolean(data.degraded));
+      setLastAnalysedRoomId(roomId);
+      setActiveRoomId(null);
       void refreshQuota();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to analyse this room.');
@@ -242,23 +272,23 @@ export default function ScanPage() {
   }
 
   async function addItem(category: string, sizeClass: 's' | 'm' | 'l') {
-    if (!room) return;
+    if (!activeRoom) return;
     const response = await fetch('/api/item', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ roomId: room.id, category, sizeClass }),
+      body: JSON.stringify({ roomId: activeRoom.id, category, sizeClass }),
     });
     const data = await response.json() as { item?: Item; error?: string };
     if (!response.ok || !data.item) {
       setError(data.error ?? 'Unable to add this item.');
       return;
     }
-    setItems((current) => [...current, data.item!]);
+    patchRoom(activeRoom.id, { items: [...activeItems, data.item] });
     setPickerOpen(false);
   }
 
   if (loading) return <main className="grid min-h-screen place-items-center bg-u-bg p-6 text-u-ink-2">Preparing your scan...</main>;
-  if (error && !room) return <main className="grid min-h-screen place-items-center bg-u-bg p-6"><div className="max-w-sm text-center"><p className="font-semibold text-c-overdue">{error}</p><Link href="/" className="mt-4 inline-block font-bold text-c-accent">Start again</Link></div></main>;
+  if (error && !rooms.length) return <main className="grid min-h-screen place-items-center bg-u-bg p-6"><div className="max-w-sm text-center"><p className="font-semibold text-c-overdue">{error}</p><Link href="/" className="mt-4 inline-block font-bold text-c-accent">Start again</Link></div></main>;
 
   return (
     <main className="min-h-screen bg-u-bg px-4 py-6 sm:px-6">
@@ -266,47 +296,109 @@ export default function ScanPage() {
         {demoMode && !degraded && <p className="mt-5 rounded-xl border border-c-waiting/20 bg-c-waiting/10 p-3 text-sm font-semibold text-c-waiting">Demo mode -- using sample inventory results.</p>}
         {degraded && !demoMode && <p className="mt-5 rounded-xl border border-c-accent/20 bg-c-accent/10 p-3 text-sm font-semibold text-c-accent">Using our backup model -- results may be less precise.</p>}
         {degraded && demoMode && <p className="mt-5 rounded-xl border border-c-overdue/20 bg-c-overdue/10 p-3 text-sm font-semibold text-c-overdue">We couldn&apos;t reach our AI just now -- showing sample results. <button type="button" onClick={() => { setError(''); }} className="font-bold underline">Try again</button></p>}
-        <section className="mt-6 rounded-3xl border border-u-border bg-u-panel p-5 shadow-sm sm:p-7">
-          <p className="text-sm font-bold uppercase tracking-[0.14em] text-c-accent">Room {items.length ? 'ready' : '1'}</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Show us this room.</h1>
-          <p className="mt-2 text-u-ink-2">Take a few wide photos from different angles. We&apos;ll avoid counting the same thing twice.</p>
-          <label className="mt-6 block text-sm font-semibold text-u-ink">What kind of room is this?
-            <select value={roomType} onChange={(event) => setRoomType(event.target.value as RoomType)} className="mt-2 min-h-11 w-full rounded-xl border border-u-border bg-u-bg px-3 text-u-ink">
-              {roomTypes.map((entry, index) => <option key={`${entry.value}-${index}`} value={entry.value}>{entry.label}</option>)}
-            </select>
-          </label>
-          <div className="mt-6"><AccessFlags value={accessFlags} onChange={setAccessFlags} /></div>
-          <label className="mt-6 grid min-h-32 cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-c-accent/30 bg-c-accent/10 p-4 text-center transition hover:bg-c-accent/15">
-            <span><strong className="block text-u-ink">Add photos</strong><span className="mt-1 block text-sm text-u-ink-2">{quotaRemainingText(quotaStatus)}</span></span>
-            <input type="file" accept="image/*" multiple onChange={addPhotos} className="sr-only" />
-          </label>
-          {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0 rounded-xl bg-u-photo-mat"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-u-ink text-sm text-u-panel" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
-          {error && <p role="alert" className="mt-4 text-sm font-medium text-c-overdue">{error}</p>}
-          {quotaBlock && (
-            <div className="mt-4 rounded-2xl border border-c-waiting/20 bg-c-waiting/10 p-5">
-              {quotaBlock.authenticated ? (
-                <div>
-                  <p className="font-black text-c-waiting">Daily limit reached (15 scans)</p>
-                  <p className="mt-1 text-sm text-u-ink-2">Your allowance resets tomorrow.</p>
-                </div>
-              ) : (
-                <div>
-                  <p className="font-black text-c-waiting">You&apos;ve used your 3 free scans today.</p>
-                  <p className="mt-1 text-sm text-u-ink-2">Create a free account to scan 15 rooms a day. It takes a few seconds.</p>
-                  <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                    <Link href={`/signup?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-waiting px-4 font-bold text-c-accent-ink">Create free account</Link>
-                    <Link href={`/login?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center font-semibold text-c-waiting">Already have an account? Sign in</Link>
+
+        {completedRooms.length > 0 && (
+          <section className="mt-6">
+            <h2 className="text-sm font-bold uppercase tracking-[0.14em] text-c-accent">
+              Rooms scanned <span className="font-mono tabular-nums">({completedRooms.length})</span>
+            </h2>
+            <div className="mt-3 space-y-2">
+              {completedRooms.map((room) => (
+                <div key={room.id} className="flex items-center justify-between gap-3 rounded-2xl border border-u-border bg-u-panel p-4 shadow-sm">
+                  <div className="min-w-0">
+                    <p className="font-bold text-u-ink">{formatLabel(room.roomType)}</p>
+                    <p className="mt-0.5 text-sm text-u-ink-2">
+                      <span className="font-mono tabular-nums">{room.items.reduce((n, i) => n + i.count, 0)}</span> item{room.items.reduce((n, i) => n + i.count, 0) === 1 ? '' : 's'}
+                      {' · '}
+                      <span className="font-mono tabular-nums">{roomCubicFeet(room)}</span> cu ft
+                    </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => beginEditing(room)}
+                    disabled={analysing || Boolean(activeRoomId)}
+                    className="shrink-0 min-h-9 rounded-xl border border-u-border px-3 text-sm font-bold text-u-ink-2 transition hover:border-c-accent hover:text-c-accent disabled:opacity-40"
+                  >
+                    Re-scan
+                  </button>
                 </div>
-              )}
+              ))}
             </div>
-          )}
-          <button type="button" disabled={!photos.length || analysing || Boolean(quotaBlock)} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-c-accent px-5 font-bold text-c-accent-ink transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-u-border disabled:text-u-ink-3">
-            {analysing ? (reducedMotion ? REDUCED_MOTION_STAGE : analysisStages[analysisStage]) : 'Analyse this room'}
-          </button>
-        </section>
-        {items.length > 0 && <section className="mt-5 rounded-3xl border border-c-fresh/20 bg-c-fresh/10 p-5"><h2 className="font-bold text-c-fresh">We found <span className="font-mono tabular-nums">{items.length}</span> item{items.length === 1 ? '' : 's'}.</h2><p className="mt-1 text-sm text-u-ink-2">You&apos;ll be able to check every item before your estimate.</p><div className="mt-4 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => void createRoom()} className="min-h-11 rounded-xl border border-c-fresh/30 bg-u-panel font-semibold text-c-fresh">Add another room</button><Link href={`/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-fresh font-semibold text-c-accent-ink">Review my inventory</Link></div></section>}
-        {items.length === 0 && !analysing && <section className="mt-5"><button type="button" onClick={() => setPickerOpen(true)} className="min-h-11 font-semibold text-c-accent">Did we miss something? Add it yourself</button>{pickerOpen && <div className="mt-3"><SimilarItemPicker roomType={roomType} onPick={addItem} onCancel={() => setPickerOpen(false)} /></div>}</section>}
+          </section>
+        )}
+
+        {activeRoom && (
+          <section className="mt-6 rounded-3xl border border-u-border bg-u-panel p-5 shadow-sm sm:p-7">
+            <p className="text-sm font-bold uppercase tracking-[0.14em] text-c-accent">
+              {completedRooms.length > 0 ? `Room ${rooms.length}` : 'Room 1'}
+            </p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-u-ink">Show us this room.</h1>
+            <p className="mt-2 text-u-ink-2">Take a few wide photos from different angles. We&apos;ll avoid counting the same thing twice.</p>
+            <label className="mt-6 block text-sm font-semibold text-u-ink">What kind of room is this?
+              <select value={roomType} onChange={(event) => setRoomType(event.target.value as RoomType)} className="mt-2 min-h-11 w-full rounded-xl border border-u-border bg-u-bg px-3 text-u-ink">
+                {roomTypes.map((entry, index) => <option key={`${entry.value}-${index}`} value={entry.value}>{entry.label}</option>)}
+              </select>
+            </label>
+            <div className="mt-6"><AccessFlags value={accessFlags} onChange={setAccessFlags} /></div>
+            <label className="mt-6 grid min-h-32 cursor-pointer place-items-center rounded-2xl border-2 border-dashed border-c-accent/30 bg-c-accent/10 p-4 text-center transition hover:bg-c-accent/15">
+              <span><strong className="block text-u-ink">Add photos</strong><span className="mt-1 block text-sm text-u-ink-2">{quotaRemainingText(quotaStatus)}</span></span>
+              <input type="file" accept="image/*" multiple onChange={addPhotos} className="sr-only" />
+            </label>
+            {photos.length > 0 && <div className="mt-4 flex gap-2 overflow-x-auto pb-1">{photos.map((photo, index) => <div key={photo.preview} className="relative shrink-0 rounded-xl bg-u-photo-mat"><img src={photo.preview} alt={`Room photo ${index + 1}`} className="h-20 w-20 rounded-xl object-cover" /><button type="button" onClick={() => removePhoto(index)} className="absolute -right-1 -top-1 grid h-6 w-6 place-items-center rounded-full bg-u-ink text-sm text-u-panel" aria-label={`Remove photo ${index + 1}`}>×</button></div>)}</div>}
+            {error && <p role="alert" className="mt-4 text-sm font-medium text-c-overdue">{error}</p>}
+            {quotaBlock && (
+              <div className="mt-4 rounded-2xl border border-c-waiting/20 bg-c-waiting/10 p-5">
+                {quotaBlock.authenticated ? (
+                  <div>
+                    <p className="font-black text-c-waiting">Daily limit reached (15 scans)</p>
+                    <p className="mt-1 text-sm text-u-ink-2">Your allowance resets tomorrow.</p>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="font-black text-c-waiting">You&apos;ve used your 3 free scans today.</p>
+                    <p className="mt-1 text-sm text-u-ink-2">Create a free account to scan 15 rooms a day. It takes a few seconds.</p>
+                    <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                      <Link href={`/signup?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-waiting px-4 font-bold text-c-accent-ink">Create free account</Link>
+                      <Link href={`/login?next=/scan/${sessionId}`} className="grid min-h-11 place-items-center font-semibold text-c-waiting">Already have an account? Sign in</Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            <button type="button" disabled={!photos.length || analysing || Boolean(quotaBlock)} onClick={analyse} className="mt-6 min-h-12 w-full rounded-2xl bg-c-accent px-5 font-bold text-c-accent-ink transition hover:opacity-90 disabled:cursor-not-allowed disabled:bg-u-border disabled:text-u-ink-3">
+              {analysing ? (reducedMotion ? REDUCED_MOTION_STAGE : analysisStages[analysisStage]) : 'Analyse this room'}
+            </button>
+
+            {activeItems.length === 0 && !analysing && (
+              <div className="mt-4">
+                <button type="button" onClick={() => setPickerOpen(true)} className="min-h-11 text-sm font-semibold text-c-accent">Did we miss something? Add it yourself</button>
+                {pickerOpen && <div className="mt-3"><SimilarItemPicker roomType={roomType} onPick={addItem} onCancel={() => setPickerOpen(false)} /></div>}
+              </div>
+            )}
+          </section>
+        )}
+
+        {!activeRoom && (
+          <section className="mt-6 rounded-3xl border border-c-fresh/20 bg-c-fresh/10 p-5">
+            {lastAnalysedRoom
+              ? <h2 className="font-bold text-c-fresh">We found <span className="font-mono tabular-nums">{lastAnalysedRoom.items.reduce((n, i) => n + i.count, 0)}</span> item{lastAnalysedRoom.items.reduce((n, i) => n + i.count, 0) === 1 ? '' : 's'} in {formatLabel(lastAnalysedRoom.roomType)}.</h2>
+              : <h2 className="font-bold text-c-fresh"><span className="font-mono tabular-nums">{completedRooms.length}</span> room{completedRooms.length === 1 ? '' : 's'} · <span className="font-mono tabular-nums">{totalItems}</span> item{totalItems === 1 ? '' : 's'} scanned.</h2>}
+            <p className="mt-1 text-sm text-u-ink-2">Add another room, or review everything before your estimate.</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <button type="button" onClick={() => void createRoom()} className="min-h-11 rounded-xl border border-c-fresh/30 bg-u-panel font-semibold text-c-fresh">Add another room</button>
+              <Link href={`/review/${sessionId}`} className="grid min-h-11 place-items-center rounded-xl bg-c-fresh font-semibold text-c-accent-ink">Review my inventory</Link>
+            </div>
+          </section>
+        )}
+
+        {totalItems > 0 && (
+          <SaveScanCard
+            sessionId={sessionId}
+            authenticated={Boolean(sessionUserId)}
+            initialLabel={sessionLabel}
+            onSaved={setSessionLabel}
+          />
+        )}
       </div>
     </main>
   );

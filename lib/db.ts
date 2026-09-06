@@ -315,6 +315,7 @@ export async function getSession(sessionId: string): Promise<SessionDetails | nu
     ...(typeof row.customer_email === 'string' ? { customerEmail: row.customer_email } : {}),
     ...(typeof row.user_id === 'string' ? { userId: row.user_id } : {}),
     ...(typeof row.device_id === 'string' ? { deviceId: row.device_id } : {}),
+    ...(typeof row.label === 'string' && row.label ? { label: row.label } : {}),
     status: row.status as SessionStatus,
     rooms,
     ...(latestQuote ? { latestQuote } : {}),
@@ -424,6 +425,143 @@ export async function setSessionEmail(sessionId: string, email: string): Promise
     .update({ customer_email: email, status: 'pending_review' })
     .eq('id', sessionId);
   if (error) throw new Error(`setSessionEmail failed: ${error.message}`);
+}
+
+export async function setSessionLabel(sessionId: string, label: string | null): Promise<void> {
+  const trimmed = label?.trim();
+  const { error } = await db()
+    .from('sessions')
+    .update({ label: trimmed ? trimmed.slice(0, 120) : null })
+    .eq('id', sessionId);
+  if (error) throw new Error(`setSessionLabel failed: ${error.message}`);
+}
+
+export interface UserScanSummary {
+  id: string;
+  label: string | null;
+  status: SessionStatus;
+  createdAt: string;
+  roomCount: number;
+  itemCount: number;
+  totalCubicFeet: number;
+  photoCount: number;
+  hasQuote: boolean;
+}
+
+export interface UserRequestSummary {
+  quoteId: string;
+  sessionId: string;
+  label: string | null;
+  status: QuoteStatus;
+  createdAt: string;
+  lowCents: number;
+  highCents: number;
+  confirmedCents: number | null;
+}
+
+/** Every scan owned by this account, newest first, with cheap roll-up counts. */
+export async function listUserSessions(userId: string): Promise<UserScanSummary[]> {
+  const client = db();
+  const { data: sessionRows, error } = await client
+    .from('sessions')
+    .select('id, label, status, created_at')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+  if (error) throw new Error(`listUserSessions failed: ${ownershipMigrationHint(error.message)}`);
+  const sessions = (sessionRows ?? []) as Row[];
+  if (!sessions.length) return [];
+  const sessionIds = sessions.map((session) => String(session.id));
+
+  const { data: roomRows, error: roomsError } = await client
+    .from('rooms')
+    .select('id, session_id')
+    .in('session_id', sessionIds);
+  if (roomsError) throw new Error(`listUserSessions rooms failed: ${roomsError.message}`);
+  const rooms = (roomRows ?? []) as Row[];
+  const roomIds = rooms.map((room) => String(room.id));
+  const sessionByRoom = new Map(rooms.map((room) => [String(room.id), String(room.session_id)]));
+
+  const [itemRows, captureRows, quoteRows] = await Promise.all([
+    roomIds.length
+      ? client.from('items').select('room_id, cubic_feet, count').in('room_id', roomIds).then((response) => response.data ?? [])
+      : Promise.resolve([] as Row[]),
+    roomIds.length
+      ? client.from('captures').select('room_id').in('room_id', roomIds).then((response) => response.data ?? [])
+      : Promise.resolve([] as Row[]),
+    client.from('quotes').select('session_id').in('session_id', sessionIds).then((response) => response.data ?? []),
+  ]);
+
+  const rollup = new Map(sessionIds.map((id) => [id, { rooms: 0, items: 0, cuft: 0, photos: 0 }]));
+  for (const room of rooms) {
+    rollup.get(String(room.session_id))!.rooms += 1;
+  }
+  for (const item of itemRows as Row[]) {
+    const sessionId = sessionByRoom.get(String(item.room_id));
+    const bucket = sessionId ? rollup.get(sessionId) : undefined;
+    if (!bucket) continue;
+    bucket.items += 1;
+    bucket.cuft += asNumber(item.cubic_feet) * asNumber(item.count);
+  }
+  for (const capture of captureRows as Row[]) {
+    const sessionId = sessionByRoom.get(String(capture.room_id));
+    const bucket = sessionId ? rollup.get(sessionId) : undefined;
+    if (bucket) bucket.photos += 1;
+  }
+  const sessionsWithQuote = new Set((quoteRows as Row[]).map((quote) => String(quote.session_id)));
+
+  return sessions.map((session) => {
+    const bucket = rollup.get(String(session.id))!;
+    return {
+      id: String(session.id),
+      label: typeof session.label === 'string' && session.label ? session.label : null,
+      status: session.status as SessionStatus,
+      createdAt: String(session.created_at),
+      roomCount: bucket.rooms,
+      itemCount: bucket.items,
+      totalCubicFeet: Math.round(bucket.cuft * 10) / 10,
+      photoCount: bucket.photos,
+      hasQuote: sessionsWithQuote.has(String(session.id)),
+    };
+  });
+}
+
+/** Every estimate request (quote) tied to this account's scans, newest first. */
+export async function listUserQuotes(userId: string): Promise<UserRequestSummary[]> {
+  const client = db();
+  const { data: sessionRows, error } = await client
+    .from('sessions')
+    .select('id, label')
+    .eq('user_id', userId);
+  if (error) throw new Error(`listUserQuotes failed: ${ownershipMigrationHint(error.message)}`);
+  const sessions = (sessionRows ?? []) as Row[];
+  if (!sessions.length) return [];
+  const labelBySession = new Map(
+    sessions.map((session) => [
+      String(session.id),
+      typeof session.label === 'string' && session.label ? session.label : null,
+    ]),
+  );
+
+  const { data: quoteRows, error: quotesError } = await client
+    .from('quotes')
+    .select('id, session_id, status, breakdown, confirmed_cents, created_at')
+    .in('session_id', [...labelBySession.keys()])
+    .order('created_at', { ascending: false });
+  if (quotesError) throw new Error(`listUserQuotes quotes failed: ${quotesError.message}`);
+
+  return ((quoteRows ?? []) as Row[]).map((quote) => {
+    const breakdown = quote.breakdown as QuoteBreakdown | null;
+    return {
+      quoteId: String(quote.id),
+      sessionId: String(quote.session_id),
+      label: labelBySession.get(String(quote.session_id)) ?? null,
+      status: quote.status as QuoteStatus,
+      createdAt: String(quote.created_at),
+      lowCents: breakdown?.lowCents ?? 0,
+      highCents: breakdown?.highCents ?? 0,
+      confirmedCents: typeof quote.confirmed_cents === 'number' ? quote.confirmed_cents : null,
+    };
+  });
 }
 
 export interface LeadsSummary {

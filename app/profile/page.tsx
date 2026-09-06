@@ -28,6 +28,14 @@ export default async function ProfilePage() {
           <div className="mt-6 rounded-xl border border-u-border bg-u-bg p-4 text-sm text-u-ink-2">
             Signed-in accounts get 15 AI scans a day, instead of the 3 given to anonymous visitors.
           </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <Link href="/scans" className="grid min-h-11 place-items-center rounded-xl border border-u-border bg-u-bg px-4 text-sm font-bold text-u-ink transition hover:border-c-accent hover:text-c-accent">
+              My scans
+            </Link>
+            <Link href="/requests" className="grid min-h-11 place-items-center rounded-xl border border-u-border bg-u-bg px-4 text-sm font-bold text-u-ink transition hover:border-c-accent hover:text-c-accent">
+              My requests
+            </Link>
+          </div>
         </section>
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <Link href="/" className="grid min-h-11 place-items-center rounded-xl bg-c-accent px-4 font-bold text-c-accent-ink transition hover:opacity-90">

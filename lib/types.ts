@@ -132,6 +132,8 @@ export interface SessionDetails {
   userId?: string;
   /** Owning device — set for every browser-created session. */
   deviceId?: string;
+  /** Optional name the customer gave this saved scan. */
+  label?: string;
   status: SessionStatus;
   rooms: Room[];
   latestQuote?: Quote;
