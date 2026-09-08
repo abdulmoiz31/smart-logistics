@@ -22,8 +22,10 @@ export async function AppHeader({ pathname }: { pathname: string }) {
   return (
     <header className="bg-u-bg px-4 py-4 sm:px-6">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2">
-        <Link href="/" className="text-xl font-black tracking-tight text-u-ink">
-          Move<span className="text-c-accent">Scan</span>
+        <Link href="/" className="flex items-center gap-2 text-xl font-black tracking-tight text-u-ink">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="" width={24} height={24} className="rounded-md" />
+          <span>Move<span className="text-c-accent">Scan</span></span>
         </Link>
         {action && <div className="order-3 basis-full sm:order-none sm:basis-auto">{action}</div>}
         <div className="ml-auto flex items-center gap-2">

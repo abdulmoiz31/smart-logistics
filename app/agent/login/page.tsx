@@ -32,7 +32,11 @@ function LoginForm() {
 
   return (
     <form onSubmit={signIn} className="w-full max-w-sm rounded-2xl border border-c-border bg-c-panel p-7 shadow-2xl">
-      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-c-accent">Meridian Dispatch</p>
+      <p className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-c-ink">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo.svg" alt="" width={18} height={18} className="rounded-sm" />
+        <span>Move<span className="text-c-accent">Scan</span></span>
+      </p>
       <h1 className="mt-3 text-2xl font-bold tracking-tight text-c-ink">Sign in to the console</h1>
       <p className="mt-2 text-sm text-c-ink-2">Shared access for moving specialists.</p>
 

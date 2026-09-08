@@ -48,8 +48,12 @@ export function ConsoleShell({
     <div className="relative min-h-dvh bg-c-bg text-c-ink">
       <header className="sticky top-0 z-20 border-b border-c-border bg-c-bg/95 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-3 px-5 py-4">
-          <span className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-c-accent">
-            Meridian Dispatch
+          <span className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo.svg" alt="" width={18} height={18} className="rounded-sm" />
+            <span className="font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-c-ink">
+              Move<span className="text-c-accent">Scan</span>
+            </span>
           </span>
           <nav className="flex gap-1" aria-label="Console views">
             <Tab href="/agent" label="Queue" current={active === 'queue'} />
